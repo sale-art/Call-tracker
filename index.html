@@ -168,45 +168,96 @@ textarea{resize:vertical}
 var customers = [];
 var curFilter = 'all';
 
-// Load from localStorage on start
+// Storage keys
+var STORAGE_KEY = 'smartech_calls_v2';
+var FILTER_KEY = 'smartech_filter_v2';
+
+// SAVE - tries localStorage, sessionStorage and cookie as fallbacks
+function save(){
+  var data = JSON.stringify(customers);
+  var saved = false;
+  // Try localStorage
+  try{ localStorage.setItem(STORAGE_KEY, data); saved=true; }catch(e){}
+  // Also try sessionStorage as backup
+  try{ sessionStorage.setItem(STORAGE_KEY, data); }catch(e){}
+  // Also save as cookie (survives localStorage clear)
+  try{
+    var expires = new Date();
+    expires.setDate(expires.getDate()+30);
+    document.cookie = STORAGE_KEY+'='+encodeURIComponent(data)+';expires='+expires.toUTCString()+';path=/;SameSite=Lax';
+  }catch(e){}
+}
+
+function saveFilter(f){
+  try{ localStorage.setItem(FILTER_KEY, f); }catch(e){}
+  try{ sessionStorage.setItem(FILTER_KEY, f); }catch(e){}
+}
+
+// LOAD - tries all storage methods
+function loadSaved(){
+  var data = null;
+  // Try localStorage first
+  try{ data = localStorage.getItem(STORAGE_KEY); }catch(e){}
+  // Try sessionStorage
+  if(!data){ try{ data = sessionStorage.getItem(STORAGE_KEY); }catch(e){} }
+  // Try cookie
+  if(!data){
+    try{
+      var match = document.cookie.match(new RegExp('(?:^|; )'+STORAGE_KEY+'=([^;]*)'));
+      if(match) data = decodeURIComponent(match[1]);
+    }catch(e){}
+  }
+  return data;
+}
+
+function loadFilter(){
+  var f = null;
+  try{ f = localStorage.getItem(FILTER_KEY); }catch(e){}
+  if(!f){ try{ f = sessionStorage.getItem(FILTER_KEY); }catch(e){} }
+  return f || 'all';
+}
+
+// Load from storage on start
 window.addEventListener('load', function(){
-  var saved = localStorage.getItem('smartech-calls');
+  var saved = loadSaved();
   if(saved){
     try{
-      customers = JSON.parse(saved);
-      if(customers.length){
+      var parsed = JSON.parse(saved);
+      if(parsed && parsed.length){
+        customers = parsed;
         // Restore filter
-        var savedFilter = localStorage.getItem('smartech-filter')||'all';
-        curFilter = savedFilter;
+        curFilter = loadFilter();
         // Highlight correct filter button
         document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});
         var fmap={'all':0,'pending':1,'success':2,'skipped':3};
         var btns=document.querySelectorAll('.fbtn');
-        if(btns[fmap[savedFilter]])btns[fmap[savedFilter]].classList.add('active');
+        if(btns[fmap[curFilter]])btns[fmap[curFilter]].classList.add('active');
         showCalls();
-        // Hide import card, show calls directly
         g('card-setup').style.display='none';
         dot(2);
+        // Show restore notification
+        var pending = customers.filter(function(c){return c.status==='pending';}).length;
+        if(pending>0){
+          setTimeout(function(){
+            alert2('import-status','warn','Welcome back! You have <strong>'+pending+' pending call(s)</strong> from your last session.');
+            g('card-setup').style.display='none';
+          },300);
+        }
       }
-    }catch(e){customers=[];}
+    }catch(e){ customers=[]; }
   }
 });
 
-// Intercept refresh/back navigation - warn user
+// Warn on close/refresh only if there are unsaved pending calls
 window.addEventListener('beforeunload', function(e){
-  if(customers.length>0){
+  save(); // Always save before leaving
+  var pending = customers.filter(function(c){return c.status==='pending';}).length;
+  if(pending>0){
     e.preventDefault();
-    e.returnValue='Your call tracker data is saved. Are you sure you want to leave?';
+    e.returnValue='You have '+pending+' pending calls. Your data is saved automatically.';
     return e.returnValue;
   }
 });
-
-// Save filter whenever it changes
-var _origSetFilter = null;
-
-function save(){
-  try{ localStorage.setItem('smartech-calls', JSON.stringify(customers)); }catch(e){}
-}
 
 function g(id){ return document.getElementById(id); }
 
@@ -331,7 +382,7 @@ function setFilter(f,el){
   curFilter=f;
   document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});
   el.classList.add('active');
-  try{localStorage.setItem('smartech-filter',f);}catch(e){}
+  saveFilter(f);
   renderList();
 }
 
