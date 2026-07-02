@@ -193,19 +193,33 @@ function saveFilter(f){
   try{ sessionStorage.setItem(FILTER_KEY, f); }catch(e){}
 }
 
-// LOAD - tries all storage methods
+// LOAD - tries all storage methods including old keys for migration
 function loadSaved(){
   var data = null;
-  // Try localStorage first
+  // Try new localStorage key first
   try{ data = localStorage.getItem(STORAGE_KEY); }catch(e){}
+  // Try old key (migration from previous version)
+  if(!data){ try{ data = localStorage.getItem('smartech-calls'); }catch(e){} }
   // Try sessionStorage
   if(!data){ try{ data = sessionStorage.getItem(STORAGE_KEY); }catch(e){} }
+  if(!data){ try{ data = sessionStorage.getItem('smartech-calls'); }catch(e){} }
   // Try cookie
   if(!data){
     try{
       var match = document.cookie.match(new RegExp('(?:^|; )'+STORAGE_KEY+'=([^;]*)'));
       if(match) data = decodeURIComponent(match[1]);
     }catch(e){}
+  }
+  // Try old cookie key
+  if(!data){
+    try{
+      var match2 = document.cookie.match(/(?:^|; )smartech-calls=([^;]*)/);
+      if(match2) data = decodeURIComponent(match2[1]);
+    }catch(e){}
+  }
+  // If data found from old key, migrate it to new key
+  if(data){
+    try{ localStorage.setItem(STORAGE_KEY, data); }catch(e){}
   }
   return data;
 }
