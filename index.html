@@ -140,6 +140,13 @@ textarea{resize:vertical}
   </div>
 
   <!-- FILTER -->
+  <!-- SEARCH BAR -->
+  <div style="position:relative;margin-bottom:10px">
+    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#999;font-size:15px">🔍</span>
+    <input type="text" id="search-input" placeholder="Search by name or product..." oninput="renderList()" style="padding-left:36px;background:#f9f9f7;border:1px solid #ddd;border-radius:8px;font-size:13px;width:100%;padding-top:9px;padding-bottom:9px;outline:none">
+    <span id="search-clear" onclick="clearSearch()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#999;cursor:pointer;font-size:18px;display:none">&#x2715;</span>
+  </div>
+
   <div class="filter-bar">
     <button class="fbtn active" onclick="setFilter('all',this)">All</button>
     <button class="fbtn fred" onclick="setFilter('pending',this)">🔴 Pending</button>
@@ -350,12 +357,31 @@ function updateStats(){
   g('prog-label').textContent=succ+' of '+total+' calls successful ('+pct+'%)';
 }
 
+function clearSearch(){
+  g('search-input').value='';
+  g('search-clear').style.display='none';
+  renderList();
+}
+
 function renderList(){
   updateStats();
-  var filtered=customers.filter(function(c){return curFilter==='all'||c.status===curFilter;});
+  var q=(g('search-input')?g('search-input').value.trim().toLowerCase():'');
+  // Show/hide clear button
+  var clr=g('search-clear');
+  if(clr)clr.style.display=q?'block':'none';
+  var filtered=customers.filter(function(c){
+    var matchStatus=curFilter==='all'||c.status===curFilter;
+    var matchSearch=!q||
+      c.name.toLowerCase().includes(q)||
+      c.product.toLowerCase().includes(q)||
+      (c.phone&&c.phone.includes(q))||
+      (c.location&&c.location.toLowerCase().includes(q));
+    return matchStatus&&matchSearch;
+  });
   var list=g('call-list');
   if(!filtered.length){
-    list.innerHTML='<div style="text-align:center;padding:24px;color:#999">No customers in this category</div>';
+    var msg=q?'No customers found for "<strong>'+q+'</strong>"':'No customers in this category';
+    list.innerHTML='<div style="text-align:center;padding:24px;color:#999">'+msg+'</div>';
     return;
   }
   // Sort: pending first, then success, then skipped
