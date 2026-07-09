@@ -3,325 +3,487 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Call Tracker — Smartech</title>
+<title>Smartech Hub — Call Tracker + Dispatch</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a18;font-size:14px;line-height:1.5}
-header{background:#fff;border-bottom:1px solid #e4e4e0;padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
-.logo{width:32px;height:32px;background:#16a34a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
-h1{font-size:15px;font-weight:600}
-.sub{font-size:12px;color:#777}
-.dots{margin-left:auto;display:flex;gap:6px}
-.dot{width:8px;height:8px;border-radius:50%;background:#ddd;transition:background .2s}
-.dot.on{background:#16a34a}.dot.done{background:#2563eb}
-main{max-width:700px;margin:0 auto;padding:20px 16px 80px}
-.card{background:#fff;border:1px solid #e4e4e0;border-radius:12px;padding:20px;margin-bottom:14px}
-.ctitle{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#777;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.ctitle b{background:#f5f5f3;border:1px solid #e4e4e0;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1a1a18}
+
+/* HEADER + TABS */
+header{background:#fff;border-bottom:1px solid #e4e4e0;position:sticky;top:0;z-index:100}
+.header-top{padding:12px 20px;display:flex;align-items:center;gap:12px}
+.logo{width:32px;height:32px;background:linear-gradient(135deg,#16a34a,#7c3aed);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.header-title h1{font-size:15px;font-weight:600}
+.header-title p{font-size:11px;color:#777}
+.tabs{display:flex;border-top:1px solid #e4e4e0}
+.tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#777;border-bottom:2px solid transparent;transition:all .15s;font-family:inherit}
+.tab.active{color:#16a34a;border-bottom-color:#16a34a}
+.tab.dispatch-tab.active{color:#7c3aed;border-bottom-color:#7c3aed}
+.tab-badge{display:inline-block;background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:4px;vertical-align:middle}
+.tab-badge.green{background:#16a34a}
+.tab-badge.purple{background:#7c3aed}
+
+/* PANELS */
+.panel{display:none;padding:16px;max-width:700px;margin:0 auto;padding-bottom:80px}
+.panel.active{display:block}
+
+/* CARDS */
+.card{background:#fff;border:1px solid #e4e4e0;border-radius:12px;padding:18px;margin-bottom:12px}
+.ctitle{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#777;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ctitle b{background:#f5f5f3;border:1px solid #e4e4e0;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+
+/* FORMS */
 label{font-size:12px;font-weight:500;color:#666;display:block;margin-bottom:4px}
 input,textarea,select{width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#f9f9f7;color:#1a1a18;font-family:inherit;outline:none;transition:border-color .15s}
 input:focus,textarea:focus,select:focus{border-color:#16a34a;background:#fff}
+.dispatch-panel input:focus,.dispatch-panel textarea:focus{border-color:#7c3aed}
 textarea{resize:vertical}
-.field{margin-bottom:12px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .12s;font-family:inherit;white-space:nowrap}
+.field{margin-bottom:10px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:11px;color:#999;margin-top:3px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .12s;font-family:inherit;white-space:nowrap}
 .btn:active{transform:scale(.97)}
-.bgr{background:#16a34a;color:#fff}.bgr:hover{background:#15803d}
+.bgr{background:#16a34a;color:#fff}
+.bpu{background:#7c3aed;color:#fff}
+.bwa{background:#25D366;color:#fff}
+.bdk{background:#1a1a18;color:#fff}
 .bred{background:#dc2626;color:#fff}
-.bblu{background:#2563eb;color:#fff}
 .bgh{background:transparent;color:#1a1a18;border-color:#ccc}.bgh:hover{background:#f5f5f3}
 .bsm{padding:5px 10px;font-size:12px}
-.blg{padding:12px 24px;font-size:14px;font-weight:600}
+.blg{padding:12px 20px;font-size:14px;font-weight:600}
 .bbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* ALERTS */
 .al{display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-radius:8px;font-size:13px;border:1px solid;margin-bottom:8px}
 .al-ok{background:#f0fdf4;border-color:#bbf7d0;color:#15803d}
 .al-err{background:#fef2f2;border-color:#fecaca;color:#dc2626}
 .al-warn{background:#fffbeb;border-color:#fde68a;color:#b45309}
 .al-info{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
-.stat{background:#f9f9f7;border:1px solid #e4e4e0;border-radius:8px;padding:10px;text-align:center}
-.snum{font-size:22px;font-weight:700;line-height:1}
-.slbl{font-size:11px;color:#999;margin-top:2px}
-.snum.green{color:#16a34a}.snum.red{color:#dc2626}.snum.blue{color:#2563eb}
-.hint{font-size:11px;color:#999;margin-top:3px}
-.spin{animation:spin 1s linear infinite;display:inline-block}
-@keyframes spin{to{transform:rotate(360deg)}}
-.divider{border-top:1px solid #e4e4e0;margin:16px 0;padding-top:16px}
-.howto{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#555;line-height:1.7}
+.al-pu{background:#f5f3ff;border-color:#ddd6fe;color:#6d28d9}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:#f9f9f7;border:1px solid #e4e4e0;border-radius:8px;padding:8px;text-align:center}
+.snum{font-size:20px;font-weight:700;line-height:1}
+.slbl{font-size:10px;color:#999;margin-top:2px}
+.snum.red{color:#dc2626}.snum.green{color:#16a34a}.snum.blue{color:#2563eb}.snum.purple{color:#7c3aed}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:10px}
+.search-wrap input{padding-left:34px}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#999;pointer-events:none}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#999;cursor:pointer;font-size:16px;display:none}
+
+/* FILTER */
+.filter-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fbtn{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #ddd;background:#fff;color:#666;transition:all .15s}
+.fbtn.active{background:#1a1a18;color:#fff;border-color:#1a1a18}
+.fbtn.fred.active{background:#dc2626;border-color:#dc2626}
+.fbtn.fgreen.active{background:#16a34a;border-color:#16a34a}
+.fbtn.fpurple.active{background:#7c3aed;border-color:#7c3aed}
+
+/* PROGRESS */
+.prog-wrap{background:#f3f4f6;border-radius:999px;height:8px;margin-bottom:4px;overflow:hidden}
+.prog-bar{height:100%;background:linear-gradient(90deg,#16a34a,#22c55e);border-radius:999px;transition:width .5s}
+.prog-label{font-size:11px;color:#666;margin-bottom:10px}
 
 /* CALL CARDS */
-.call-list{display:flex;flex-direction:column;gap:10px}
-.call-card{border-radius:10px;border:2px solid #e4e4e0;padding:14px 16px;transition:all .2s;position:relative}
-.call-card.pending{border-color:#fca5a5;background:#fff5f5;animation:pulse-red 2s ease-in-out infinite}
-.call-card.success{border-color:#86efac;background:#f0fdf4;animation:none}
-.call-card.skipped{border-color:#e4e4e0;background:#f9f9f7;opacity:.7;animation:none}
-@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0.15);}50%{box-shadow:0 0 0 6px rgba(220,38,38,0.05);}}
-.call-top{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.call-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
-.pending .call-avatar{background:#fecaca;color:#dc2626}
-.success .call-avatar{background:#bbf7d0;color:#15803d}
-.skipped .call-avatar{background:#e5e7eb;color:#6b7280}
-.call-name{font-weight:600;font-size:15px}
-.call-product{font-size:12px;color:#666;margin-top:1px}
-.call-phone{font-family:monospace;font-size:13px;color:#1a1a18;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.call-actions{display:flex;gap:8px;flex-wrap:wrap}
-.call-status-badge{position:absolute;top:12px;right:12px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px}
-.pending .call-status-badge{background:#fecaca;color:#dc2626}
-.success .call-status-badge{background:#bbf7d0;color:#15803d}
-.skipped .call-status-badge{background:#e5e7eb;color:#6b7280}
-.call-notes{width:100%;margin-top:8px;font-size:12px;padding:7px 10px;border-radius:6px;border:1px solid #ddd;background:#fff}
-.call-time{font-size:11px;color:#999;margin-top:6px}
+.call-list{display:flex;flex-direction:column;gap:8px}
+.cc{border-radius:10px;border:2px solid #e4e4e0;padding:12px 14px;transition:all .2s;position:relative}
+.cc.pending{border-color:#fca5a5;background:#fff5f5;animation:pulse-red 2s ease-in-out infinite}
+.cc.success{border-color:#86efac;background:#f0fdf4}
+.cc.dispatched{border-color:#ddd6fe;background:#faf5ff}
+.cc.skipped{border-color:#e4e4e0;background:#f9f9f7;opacity:.7}
+@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.1);}50%{box-shadow:0 0 0 6px rgba(220,38,38,.04);}}
+.cc-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.cc-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.pending .cc-avatar{background:#fecaca;color:#dc2626}
+.success .cc-avatar{background:#bbf7d0;color:#15803d}
+.dispatched .cc-avatar{background:#ddd6fe;color:#6d28d9}
+.skipped .cc-avatar{background:#e5e7eb;color:#6b7280}
+.cc-name{font-weight:600;font-size:14px}
+.cc-product{font-size:11px;color:#666}
+.cc-loc{font-size:11px;color:#888;margin-top:1px}
+.cc-phone{font-family:monospace;font-size:12px;margin-bottom:8px}
+.cc-badge{position:absolute;top:10px;right:10px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px}
+.pending .cc-badge{background:#fecaca;color:#dc2626}
+.success .cc-badge{background:#bbf7d0;color:#15803d}
+.dispatched .cc-badge{background:#ddd6fe;color:#6d28d9}
+.skipped .cc-badge{background:#e5e7eb;color:#6b7280}
+.cc-notes{width:100%;margin-top:6px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid #ddd;background:#fff}
+.cc-time{font-size:10px;color:#999;margin-top:4px}
 
-/* FILTER BAR */
-.filter-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-.fbtn{padding:5px 14px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #ddd;background:#fff;color:#666;transition:all .15s}
-.fbtn.active{background:#1a1a18;color:#fff;border-color:#1a1a18}
-.fbtn.fred{background:#dc2626;color:#fff;border-color:#dc2626}
-.fbtn.fgreen{background:#16a34a;color:#fff;border-color:#16a34a}
+/* DISPATCH CARDS */
+.dc{border-radius:10px;border:2px solid #ddd6fe;padding:12px 14px;background:#faf5ff;margin-bottom:8px;position:relative}
+.dc.sent{border-color:#bbf7d0;background:#f0fdf4}
+.dc-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.dc-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0}
+.dc.sent .dc-avatar{background:linear-gradient(135deg,#16a34a,#4ade80)}
+.dc-name{font-weight:600;font-size:14px}
+.dc-product{font-size:11px;color:#666}
+.dc-loc{font-size:11px;color:#7c3aed}
+.dc.sent .dc-loc{color:#15803d}
+.dc-badge{position:absolute;top:10px;right:10px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;background:#ddd6fe;color:#6d28d9}
+.dc.sent .dc-badge{background:#bbf7d0;color:#15803d}
+.dc-addr{background:#fff;border:1px solid #ddd6fe;border-radius:6px;padding:8px 10px;font-size:11px;color:#4c1d95;line-height:1.6;margin-bottom:8px}
+.dc.sent .dc-addr{border-color:#bbf7d0;color:#14532d}
+.track-input{font-family:monospace;font-weight:700;font-size:13px;color:#7c3aed;background:#faf5ff;border:2px solid #ddd6fe !important;padding:8px 12px !important}
+.dc.sent .track-input{color:#16a34a;background:#f0fdf4;border-color:#bbf7d0 !important}
 
-/* PROGRESS BAR */
-.prog-wrap{background:#f3f4f6;border-radius:999px;height:8px;margin-bottom:6px;overflow:hidden}
-.prog-bar{height:100%;background:linear-gradient(90deg,#16a34a,#22c55e);border-radius:999px;transition:width .5s}
-.prog-label{font-size:12px;color:#666;margin-bottom:12px}
+/* QUEUE BOX */
+.qbox{border-radius:12px;padding:20px;text-align:center;margin-bottom:12px}
+.qbox.call-q{background:#fff5f5;border:2px solid #fca5a5}
+.qbox.dispatch-q{background:#f5f3ff;border:2px solid #ddd6fe}
+.qprog{font-size:11px;color:#999;margin-bottom:4px}
+.qname{font-size:20px;font-weight:700;margin-bottom:2px}
+.qprod{font-size:12px;color:#666;margin-bottom:2px}
+.qloc{font-size:11px;margin-bottom:12px}
+.call-q .qloc{color:#dc2626}
+.dispatch-q .qloc{color:#7c3aed}
+
+/* HOWTO */
+.howto{border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;line-height:1.7}
+.howto-green{background:#f0fdf4;border:1px solid #bbf7d0;color:#555}
+.howto-purple{background:#f5f3ff;border:1px solid #ddd6fe;color:#555}
+
+/* DIVIDER */
+.divider{border-top:1px solid #e4e4e0;margin:12px 0;padding-top:12px}
+
+/* DISPATCH ADDR */
+.dispatch-addr-box{background:#fff;border:1px solid #ddd6fe;border-radius:6px;padding:8px 10px;font-size:11px;color:#4c1d95;line-height:1.6;margin-bottom:8px;white-space:pre-wrap}
+.dispatch-msg-box{background:#fff;border:1px solid #e4e4e0;border-radius:6px;padding:8px 10px;font-size:11px;color:#333;line-height:1.6;margin-bottom:10px;white-space:pre-wrap;max-height:120px;overflow-y:auto}
 
 @media(max-width:500px){.row2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
+
 <header>
-  <div class="logo">📞</div>
-  <div><h1>Call Tracker</h1><p class="sub">Track customer calls — Smartech</p></div>
-  <div class="dots"><div class="dot on" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div></div>
+  <div class="header-top">
+    <div class="logo">🚀</div>
+    <div class="header-title">
+      <h1>Smartech Hub</h1>
+      <p>Call Tracker + Dispatch Tool</p>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('call')" id="tab-call">📞 Call Tracker <span class="tab-badge" id="badge-pending">0</span></button>
+    <button class="tab dispatch-tab" onclick="switchTab('dispatch')" id="tab-dispatch">📦 Dispatch <span class="tab-badge purple" id="badge-ready">0</span></button>
+  </div>
 </header>
-<main>
 
-<!-- STEP 1: IMPORT -->
-<div class="card" id="card-setup">
-  <div class="ctitle"><b>1</b> Import Customers to Call</div>
-  <div class="howto">
-    📋 <strong>How to use:</strong><br>
-    1. Paste your Telegram order messages below — no separator needed<br>
-    2. Click <strong>Import customers</strong><br>
-    3. Call each customer — click ✅ <strong>Call Successful</strong> if they picked up<br>
-    4. Failed calls stay <span style="color:#dc2626;font-weight:600">RED</span> until you successfully call them
-  </div>
-  <div class="field">
-    <label>Paste order messages from Telegram</label>
-    <textarea id="paste" rows="8" placeholder="Just paste all your order messages here — no separator needed. The tool will detect each customer automatically."></textarea>
-  </div>
-  <div class="bbar" style="margin-bottom:12px">
-    <button class="btn bgr blg" onclick="importCustomers()">📞 Import customers</button>
-    <button class="btn bgh" onclick="loadDemo()">▷ Demo</button>
-    <button class="btn bgh bsm" onclick="addOne()">+ Add one</button>
-  </div>
-  <div id="import-status"></div>
-</div>
+<!-- ══════════════ CALL TRACKER PANEL ══════════════ -->
+<div class="panel active" id="panel-call">
 
-<!-- STEP 2: CALL LIST -->
-<div class="card" id="card-calls" style="display:none">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-    <div class="ctitle" style="margin-bottom:0"><b>2</b> Call List <span id="ccount" style="font-size:12px;font-weight:400;color:#999"></span></div>
-    <div class="bbar">
-      <button class="btn bgh bsm" onclick="addOne()">+ Add</button>
-      <button class="btn bgr bsm" onclick="saveToFile()">💾 Save</button><button class="btn bgh bsm" onclick="loadFromFile()">📂 Load</button><button class="btn bgh bsm" onclick="exportSummary()">⬇ Export</button><button class="btn bgh bsm" onclick="showImport()">+ Import more</button><button class="btn bred bsm" onclick="clearAll()">🗑 Clear all</button>
+  <!-- IMPORT -->
+  <div class="card" id="ct-import">
+    <div class="ctitle"><b>1</b> Import Customers</div>
+    <div class="howto howto-green">
+      📋 Paste Telegram order messages below — no separator needed<br>
+      ✅ Mark calls as <strong>Successful</strong> then go to <strong>📦 Dispatch</strong> tab to send pickup info
+    </div>
+    <div class="field"><textarea id="ct-paste" rows="6" placeholder="Paste all your Telegram order messages here — no separator needed. The tool detects each order automatically."></textarea></div>
+    <div class="bbar" style="margin-bottom:10px">
+      <button class="btn bgr blg" onclick="ctImport()">📞 Import customers</button>
+      <button class="btn bgh" onclick="ctDemo()">▷ Demo</button>
+      <button class="btn bgh bsm" onclick="ctAddOne()">+ Add one</button>
+    </div>
+    <div id="ct-status"></div>
+  </div>
+
+  <!-- CALL LIST -->
+  <div class="card" id="ct-list-card" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+      <div class="ctitle" style="margin-bottom:0"><b>2</b> Call List <span id="ct-count" style="font-size:11px;font-weight:400;color:#999"></span></div>
+      <div class="bbar">
+        <button class="btn bgh bsm" onclick="ctShowImport()">⬇ Import more</button>
+        <button class="btn bgr bsm" onclick="ctSaveFile()">💾 Save</button>
+        <button class="btn bgh bsm" onclick="ctLoadFile()">📂 Load</button>
+        <button class="btn bred bsm" onclick="ctClearAll()">🗑 Clear</button>
+      </div>
+    </div>
+    <div class="prog-wrap"><div class="prog-bar" id="ct-prog-bar" style="width:0%"></div></div>
+    <div class="prog-label" id="ct-prog-label">0 of 0 calls completed</div>
+    <div class="stats">
+      <div class="stat"><div class="snum" id="ct-st-t">0</div><div class="slbl">Total</div></div>
+      <div class="stat"><div class="snum red" id="ct-st-p">0</div><div class="slbl">Pending 🔴</div></div>
+      <div class="stat"><div class="snum green" id="ct-st-s">0</div><div class="slbl">Called ✅</div></div>
+      <div class="stat"><div class="snum purple" id="ct-st-d">0</div><div class="slbl">Dispatched 📦</div></div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="ct-search" placeholder="Search by name, product or location..." oninput="ctRender()">
+      <span class="search-clear" id="ct-search-clear" onclick="ctClearSearch()">✕</span>
+    </div>
+    <div class="filter-bar">
+      <button class="fbtn active" onclick="ctSetFilter('all',this)">All</button>
+      <button class="fbtn fred" onclick="ctSetFilter('pending',this)">🔴 Pending</button>
+      <button class="fbtn fgreen" onclick="ctSetFilter('success',this)">✅ Called</button>
+      <button class="fbtn fpurple" onclick="ctSetFilter('dispatched',this)">📦 Dispatched</button>
+      <button class="fbtn" onclick="ctSetFilter('skipped',this)">⏭ Skipped</button>
+    </div>
+    <div class="call-list" id="ct-list"></div>
+  </div>
+
+  <!-- DISPATCH PROMPT -->
+  <div class="card" id="ct-dispatch-prompt" style="display:none;border:2px solid #ddd6fe;background:#faf5ff">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:14px;color:#6d28d9">📦 Ready to dispatch!</div>
+        <div style="font-size:12px;color:#777;margin-top:2px"><span id="dp-ready-count">0</span> customers called successfully and ready for dispatch</div>
+      </div>
+      <button class="btn bpu blg" onclick="switchTab('dispatch')">Go to Dispatch →</button>
     </div>
   </div>
 
-  <!-- PROGRESS -->
-  <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
-  <div class="prog-label" id="prog-label">0 of 0 calls completed</div>
-
-  <!-- STATS -->
-  <div class="stats">
-    <div class="stat"><div class="snum" id="st-t">0</div><div class="slbl">Total</div></div>
-    <div class="stat"><div class="snum red" id="st-p">0</div><div class="slbl">Pending 🔴</div></div>
-    <div class="stat"><div class="snum green" id="st-s">0</div><div class="slbl">Called ✅</div></div>
-    <div class="stat"><div class="snum blue" id="st-k">0</div><div class="slbl">Skipped</div></div>
-  </div>
-
-  <!-- FILTER -->
-  <!-- SEARCH BAR -->
-  <div style="position:relative;margin-bottom:10px">
-    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#999;font-size:15px">🔍</span>
-    <input type="text" id="search-input" placeholder="Search by name or product..." oninput="renderList()" style="padding-left:36px;background:#f9f9f7;border:1px solid #ddd;border-radius:8px;font-size:13px;width:100%;padding-top:9px;padding-bottom:9px;outline:none">
-    <span id="search-clear" onclick="clearSearch()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#999;cursor:pointer;font-size:18px;display:none">&#x2715;</span>
-  </div>
-
-  <div class="filter-bar">
-    <button class="fbtn active" onclick="setFilter('all',this)">All</button>
-    <button class="fbtn fred" onclick="setFilter('pending',this)">🔴 Pending</button>
-    <button class="fbtn fgreen" onclick="setFilter('success',this)">✅ Called</button>
-    <button class="fbtn" onclick="setFilter('skipped',this)">⏭ Skipped</button>
-  </div>
-
-  <div class="call-list" id="call-list"></div>
 </div>
 
-<!-- LOG -->
-<div class="card" id="card-log" style="display:none">
-  <div class="ctitle"><b>3</b> Call Log</div>
-  <div id="log-body"><div style="text-align:center;padding:20px;color:#999">No calls logged yet</div></div>
+<!-- ══════════════ DISPATCH PANEL ══════════════ -->
+<div class="panel dispatch-panel" id="panel-dispatch">
+
+  <!-- DISPATCH SETTINGS -->
+  <div class="card" id="dp-settings">
+    <div class="ctitle"><b>1</b> Dispatch Settings</div>
+    <div class="howto howto-purple">
+      📦 Customers you marked as <strong>✅ Called Successful</strong> appear here automatically<br>
+      Type the tracking number for each customer, then send their pickup address via WhatsApp
+    </div>
+    <div class="row2">
+      <div class="field"><label>Business name</label><input id="dp-biz" value="Smartech"></div>
+    </div>
+    <div class="field">
+      <label>WhatsApp message template</label>
+      <textarea id="dp-tpl" rows="7">Hello {name}! 🎉
+
+Your {product} order from {biz} is ready for pickup!
+
+📍 PICKUP ADDRESS:
+{address}
+
+📦 TRACKING NUMBER: {tracking}
+
+Please bring this tracking number when you come to pick up.
+
+🕐 Pickup Hours: Mon-Sat 7am-7pm | Sun 10am-3pm
+
+Thank you for choosing {biz}! 🙏</textarea>
+    </div>
+    <div id="dp-status"></div>
+  </div>
+
+  <!-- DISPATCH LIST -->
+  <div class="card" id="dp-list-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+      <div class="ctitle" style="margin-bottom:0"><b>2</b> Dispatch List <span id="dp-count" style="font-size:11px;font-weight:400;color:#999"></span></div>
+      <div class="bbar">
+        <button class="btn bpu bsm" onclick="dpStartQueue()">📱 Send all</button>
+        <button class="btn bgr bsm" onclick="dpSaveFile()">💾 Save</button>
+      </div>
+    </div>
+    <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat"><div class="snum purple" id="dp-st-t">0</div><div class="slbl">Total</div></div>
+      <div class="stat"><div class="snum red" id="dp-st-p">0</div><div class="slbl">Pending</div></div>
+      <div class="stat"><div class="snum green" id="dp-st-s">0</div><div class="slbl">Sent ✅</div></div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="dp-search" placeholder="Search by name, product or location..." oninput="dpRender()">
+    </div>
+    <div id="dp-list"><div style="text-align:center;padding:24px;color:#999">No customers ready for dispatch yet.<br>Go to <strong>📞 Call Tracker</strong> and mark customers as ✅ Called Successful.</div></div>
+  </div>
+
+  <!-- DISPATCH QUEUE -->
+  <div class="card" id="dp-queue-card" style="display:none">
+    <div class="ctitle"><b>3</b> Send WhatsApp — one by one</div>
+    <div class="qbox dispatch-q">
+      <div class="qprog" id="dp-qprog">Customer 1 of 5</div>
+      <div class="qname" id="dp-qname">Loading...</div>
+      <div class="qprod" id="dp-qprod"></div>
+      <div class="qloc" id="dp-qloc">📍</div>
+      <div class="field" style="margin-bottom:10px;text-align:left">
+        <label style="font-size:11px;font-weight:600;color:#7c3aed">📦 TRACKING NUMBER</label>
+        <input id="dp-qtrack" type="text" placeholder="Type tracking number here..." onchange="dpUpdateQueueTracking(this.value)" class="track-input" style="margin-top:4px">
+      </div>
+      <div class="dispatch-addr-box" id="dp-qaddr"></div>
+      <div class="dispatch-msg-box" id="dp-qmsg"></div>
+      <button class="btn bwa blg" onclick="dpOpenWa()" style="width:100%;justify-content:center;margin-bottom:12px">📱 Open WhatsApp for this customer</button>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn bgh" onclick="dpSkipQ()">⏭ Skip</button>
+        <button class="btn bpu blg" onclick="dpNextQ()">✓ Sent — Next</button>
+      </div>
+      <div style="margin-top:10px"><button class="btn bgh bsm" onclick="dpEndQueue()">✕ Stop & go back</button></div>
+    </div>
+  </div>
+
 </div>
 
-</main>
 <script>
-var customers = [];
-var curFilter = 'all';
+// ══════════ PICKUP DATABASE ══════════
+var PICKUP_DB={
+  lagos:{label:'Lagos',address:'Home Delivery — Our agent will deliver directly to your door in Lagos.'},
+  abuja:{label:'Abuja (FCT)',address:'Smartech Pickup — Utako Outlet\nPlot 113, I.V.W. Osisiogu Street, Beside Utako Police Station, Utako, Abuja\n(Open 24 Hours Every Day)'},
+  kano:{label:'Kano',address:'Smartech Pickup — Kano Outlet\n1 Bompai Road, By Tafawa Balewa Way, Opposite Dominos Pizza, Kano\nMon-Sat: 7:30am-7pm'},
+  kaduna:{label:'Kaduna',address:'Smartech Pickup — Kaduna Outlet\n19/20 Jos Road, By Ahmadu Bello Way, Kaduna\nMon-Sat: 7:30am-7pm'},
+  portharcourt:{label:'Port Harcourt',address:'Smartech Pickup — Port Harcourt Outlet\n9 Stadium Road, Beside Benjack, Port Harcourt\nMon-Sat: 7am-6pm | Sun: 8am-3pm'},
+  ibadan:{label:'Ibadan',address:'Smartech Pickup — Ibadan Outlet\nTown Planning Complex, By Sumal Foods, Ring Road, Ibadan\nMon-Sat: 7:30am-7pm'},
+  enugu:{label:'Enugu',address:'Smartech Pickup — Enugu Outlet\n67 Zik Avenue, Uwani, Enugu\nMon-Sat: 7:30am-6pm | Sun: 8am-3pm'},
+  onitsha:{label:'Onitsha',address:'Smartech Pickup — Onitsha Outlet\n2 Awka Road, By DMGS Junction, Onitsha, Anambra\nMon-Sat: 8am-6pm'},
+  owerri:{label:'Owerri',address:'Smartech Pickup — Owerri Outlet\nPlot C31, Relief Road, By Relief Junction, Off Egbu Road, Owerri\nMon-Sat: 6:30am-7:30pm'},
+  benin:{label:'Benin City',address:'Smartech Pickup — Benin City Outlet\n112 Akpakpava Road, Benin City, Edo State\nMon-Sat: 6am-6pm | Sun: 7am-3pm'},
+  warri:{label:'Warri',address:'Smartech Pickup — Warri Outlet\n116 Effurun-Sapele Road, Effurun, Delta State\nMon-Sat: 7am-6pm'},
+  asaba:{label:'Asaba',address:'Smartech Pickup — Asaba Outlet\n445 Nnebisi Road, Opposite Zenith Bank, Asaba, Delta State\nMon-Sat: 8am-6pm'},
+  abeokuta:{label:'Abeokuta',address:'Smartech Pickup — Abeokuta Outlet\n62 Tinubu Street, Ita Eko, Abeokuta, Ogun State\nMon-Sat: 7:30am-7pm'},
+  ilorin:{label:'Ilorin',address:'Smartech Pickup — Ilorin Outlet\n151 Ibrahim Taiwo Road, Adjacent Chicken Republic, Ilorin, Kwara State\nMon-Sat: 7:30am-6pm'},
+  jos:{label:'Jos',address:'Smartech Pickup — Jos Outlet\nPlaza 1080, Yakubu Gowon Way, Dadin Kowa Second Gate, Jos\nMon-Sat: 8am-7pm'},
+  maiduguri:{label:'Maiduguri',address:'Smartech Pickup — Maiduguri Outlet\n10A Golden Plaza, Opposite Elkanemi College, Jos Road, Maiduguri\nMon-Sat: 8am-6pm'},
+  yola:{label:'Yola',address:'Smartech Pickup — Yola Outlet\nPlot 2, Bekaji Plaza, Bekaji Karewa Road, Jimeta, Yola, Adamawa\nMon-Sat: 8am-6pm'},
+  bauchi:{label:'Bauchi',address:'Smartech Pickup — Bauchi Outlet\nShop 7, Mai Jamaa Plaza, Yandoka Road, Bauchi\nMon-Sat: 8am-6pm'},
+  sokoto:{label:'Sokoto',address:'Smartech Pickup — Sokoto Outlet\n3/4 Maiduguri Road, Gawon Nama Area, Sokoto\nMon-Sat: 7am-6pm'},
+  minna:{label:'Minna',address:'Smartech Pickup — Minna Outlet\nAfter Mr Biggs, Beside NEPA Office, Farm Center, Tunga, Minna, Niger State\nMon-Sat: 7:30am-7pm'},
+  lokoja:{label:'Lokoja',address:'Smartech Pickup — Lokoja Outlet\n1 IBB Way, Adankolo, Lokoja, Kogi State\nMon-Sat: 7:30am-6pm'},
+  lafia:{label:'Lafia',address:'Smartech Pickup — Lafia Outlet\nOpposite Polaris Bank, Jos Road, Lafia, Nasarawa State\nMon-Sat: 7:30am-7pm'},
+  makurdi:{label:'Makurdi',address:'Smartech Pickup — Makurdi Outlet\n4 Old Otukpo Road, By Savannah Roundabout, Makurdi, Benue State\nMon-Sat: 7:30am-7pm'},
+  akure:{label:'Akure',address:'Smartech Pickup — Akure Outlet\n22 Oyemekun Road, Opposite SLOT, Akure, Ondo State\nMon-Sat: 7:30am-6:30pm'},
+  osogbo:{label:'Osogbo',address:'Smartech Pickup — Osogbo Outlet\nKM 3, Gbongan-Ibadan Road, NIPCO Filling Station, Osogbo, Osun State\nMon-Sat: 7:30am-7pm'},
+  aba:{label:'Aba',address:'Smartech Pickup — Aba Outlet\nAsa Road, Former NITEL Building, Aba, Abia State\nMon-Sat: 6am-7pm'},
+  umuahia:{label:'Umuahia',address:'Smartech Pickup — Umuahia Outlet\n8 Mission Hill, Opposite Villaroy Hotel, Umuahia, Abia State\nMon-Sat: 6am-7pm'},
+  uyo:{label:'Uyo',address:'Smartech Pickup — Uyo Outlet\n108 Oron Road, Beside First Bank, Uyo, Akwa Ibom State\nMon-Sat: 8am-7pm'},
+  calabar:{label:'Calabar',address:'Smartech Pickup — Calabar Outlet\n29 Ndidem Usang Iso Road, Calabar, Cross River State\nMon-Sat: 8am-6pm'},
+  yenagoa:{label:'Yenagoa',address:'Smartech Pickup — Yenagoa Outlet\nKpansia Epia, Opposite Wema Bank, Yenagoa, Bayelsa State\nMon-Sat: 6am-6pm'},
+  abakaliki:{label:'Abakaliki',address:'Smartech Pickup — Abakaliki Outlet\nCentral Park, Opposite International Market, Abakaliki, Ebonyi State\nMon-Sat: 7am-6pm'},
+  awka:{label:'Awka',address:'Smartech Pickup — Awka Outlet\nElite Shopping Complex, Enugu/Onitsha Expressway, Awka, Anambra State\nMon-Sat: 6am-6pm'},
+  ado:{label:'Ado Ekiti',address:'Smartech Pickup — Ado Ekiti Outlet\nSoladola Filling Station, Beside APC Secretariat, Ajilosun, Ado Ekiti\nMon-Sat: 7:30am-6:30pm'},
+  dutse:{label:'Dutse',address:'Smartech Pickup — Dutse Outlet\nGovernment House Roundabout, Asamau House, Dutse, Jigawa State\nMon-Sat: 7:30am-6pm'},
+  katsina:{label:'Katsina',address:'Smartech Pickup — Katsina Outlet\nAbudullahi Sarki Muktar Road, Along Kiddies Roundabout, Katsina\nMon-Sat: 7am-6pm'},
+  birnin:{label:'Birnin Kebbi',address:'Smartech Pickup — Birnin Kebbi Outlet\nAhmadu Bello Way, Opposite Alhaji Boye Coca-Cola Depot, Birnin Kebbi\nMon-Sat: 8am-6pm'},
+  damaturu:{label:'Damaturu',address:'Smartech Pickup — Damaturu Outlet\nShop 2, Adhaza Plaza, Gashuwa Road, Damaturu, Yobe State\nMon-Sat: 8am-6pm'},
+  jalingo:{label:'Jalingo',address:'Smartech Pickup — Jalingo Outlet\n106 White Castle Plaza, Barde Way, Jalingo, Taraba State\nMon-Sat: 7:30am-6pm'},
+  gusau:{label:'Gusau',address:'Smartech Pickup — Gusau Outlet\nC1, A.A. Master Plaza, Canteen Road, Gusau, Zamfara State\nMon-Sat: 8am-6pm'},
+  gombe:{label:'Gombe',address:'Smartech Pickup — Gombe Outlet\nShop 4, El-Zaks Plaza, Ashaka Road, Gombe\nMon-Sat: 8am-6pm'}
+};
 
-// Storage keys
-var STORAGE_KEY = 'smartech_calls_v2';
-var FILTER_KEY = 'smartech_filter_v2';
+function matchAddress(loc){
+  if(!loc)return null;
+  var l=loc.toLowerCase();
+  if(l.includes('lagos'))return PICKUP_DB.lagos;
+  if(l.includes('abuja')||l.includes('fct'))return PICKUP_DB.abuja;
+  if(l.includes('kano'))return PICKUP_DB.kano;
+  if(l.includes('kaduna'))return PICKUP_DB.kaduna;
+  if(l.includes('port harcourt')||l.includes('phc')||l.includes('rivers'))return PICKUP_DB.portharcourt;
+  if(l.includes('ibadan')||l.includes('oyo'))return PICKUP_DB.ibadan;
+  if(l.includes('enugu'))return PICKUP_DB.enugu;
+  if(l.includes('onitsha'))return PICKUP_DB.onitsha;
+  if(l.includes('owerri')||l.includes('imo'))return PICKUP_DB.owerri;
+  if(l.includes('benin')||l.includes('edo'))return PICKUP_DB.benin;
+  if(l.includes('warri'))return PICKUP_DB.warri;
+  if(l.includes('asaba')||l.includes('delta'))return PICKUP_DB.asaba;
+  if(l.includes('abeokuta')||l.includes('ogun'))return PICKUP_DB.abeokuta;
+  if(l.includes('ilorin')||l.includes('kwara'))return PICKUP_DB.ilorin;
+  if(l.includes('jos')||l.includes('plateau'))return PICKUP_DB.jos;
+  if(l.includes('maiduguri')||l.includes('borno'))return PICKUP_DB.maiduguri;
+  if(l.includes('yola')||l.includes('adamawa'))return PICKUP_DB.yola;
+  if(l.includes('bauchi'))return PICKUP_DB.bauchi;
+  if(l.includes('sokoto'))return PICKUP_DB.sokoto;
+  if(l.includes('minna')||l.includes('niger state'))return PICKUP_DB.minna;
+  if(l.includes('lokoja')||l.includes('kogi'))return PICKUP_DB.lokoja;
+  if(l.includes('lafia')||l.includes('nasarawa'))return PICKUP_DB.lafia;
+  if(l.includes('makurdi')||l.includes('benue'))return PICKUP_DB.makurdi;
+  if(l.includes('akure')||l.includes('ondo'))return PICKUP_DB.akure;
+  if(l.includes('osogbo')||l.includes('osun'))return PICKUP_DB.osogbo;
+  if(l.includes('umuahia')||l.includes('abia'))return PICKUP_DB.umuahia;
+  if(l.includes('aba'))return PICKUP_DB.aba;
+  if(l.includes('uyo')||l.includes('akwa'))return PICKUP_DB.uyo;
+  if(l.includes('calabar')||l.includes('cross river'))return PICKUP_DB.calabar;
+  if(l.includes('yenagoa')||l.includes('bayelsa'))return PICKUP_DB.yenagoa;
+  if(l.includes('abakaliki')||l.includes('ebonyi'))return PICKUP_DB.abakaliki;
+  if(l.includes('awka')||l.includes('anambra'))return PICKUP_DB.awka;
+  if(l.includes('ado ekiti')||l.includes('ekiti'))return PICKUP_DB.ado;
+  if(l.includes('dutse')||l.includes('jigawa'))return PICKUP_DB.dutse;
+  if(l.includes('katsina'))return PICKUP_DB.katsina;
+  if(l.includes('birnin kebbi')||l.includes('kebbi'))return PICKUP_DB.birnin;
+  if(l.includes('damaturu')||l.includes('yobe'))return PICKUP_DB.damaturu;
+  if(l.includes('jalingo')||l.includes('taraba'))return PICKUP_DB.jalingo;
+  if(l.includes('gusau')||l.includes('zamfara'))return PICKUP_DB.gusau;
+  if(l.includes('gombe'))return PICKUP_DB.gombe;
+  return null;
+}
 
-// SAVE - tries localStorage, sessionStorage and cookie as fallbacks
-function save(){
-  var data = JSON.stringify(customers);
-  var saved = false;
-  // Try localStorage
-  try{ localStorage.setItem(STORAGE_KEY, data); saved=true; }catch(e){}
-  // Also try sessionStorage as backup
-  try{ sessionStorage.setItem(STORAGE_KEY, data); }catch(e){}
-  // Also save as cookie (survives localStorage clear)
+// ══════════ SHARED UTILS ══════════
+function g(id){return document.getElementById(id);}
+function ini(name){var p=name.trim().split(' ').filter(Boolean);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():name.slice(0,2).toUpperCase();}
+function al(tid,type,html){var icons={ok:'✅',err:'❌',warn:'⚠️',info:'ℹ️',pu:'📦'};g(tid).innerHTML='<div class="al al-'+type+'">'+icons[type]+'<span>'+html+'</span></div>';}
+
+// Use SAME keys as existing call-tracker so data carries over automatically
+var CT_KEY='smartech_calls_v2';      // matches existing call-tracker
+var CT_KEY_OLD='smartech-calls';     // matches older call-tracker version
+var DP_KEY='smartech_hub_dispatch_v1';
+var LOG_KEY='smartech_hub_log_v1';
+
+// ══════════ CALL TRACKER ══════════
+var customers=[];
+var ctFilter='all';
+var activityLog=[];
+
+function ctSave(){
+  var data=JSON.stringify(customers);
+  // Write to ALL keys so data is accessible from any version of the tool
+  try{localStorage.setItem('smartech_calls_v2',data);}catch(e){}
+  try{localStorage.setItem('smartech-calls',data);}catch(e){}
+  try{sessionStorage.setItem('smartech_calls_v2',data);}catch(e){}
+  // Save to cookie as 30-day backup
   try{
-    var expires = new Date();
-    expires.setDate(expires.getDate()+30);
-    document.cookie = STORAGE_KEY+'='+encodeURIComponent(data)+';expires='+expires.toUTCString()+';path=/;SameSite=Lax';
+    var exp=new Date();exp.setDate(exp.getDate()+30);
+    document.cookie='smartech_calls_v2='+encodeURIComponent(data)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
   }catch(e){}
+  dpSync(); // Auto-sync dispatch whenever call tracker saves
 }
 
-function saveFilter(f){
-  try{ localStorage.setItem(FILTER_KEY, f); }catch(e){}
-  try{ sessionStorage.setItem(FILTER_KEY, f); }catch(e){}
-}
-
-// LOAD - tries all storage methods including old keys for migration
-function loadSaved(){
-  var data = null;
-  // Try new localStorage key first
-  try{ data = localStorage.getItem(STORAGE_KEY); }catch(e){}
-  // Try old key (migration from previous version)
-  if(!data){ try{ data = localStorage.getItem('smartech-calls'); }catch(e){} }
-  // Try sessionStorage
-  if(!data){ try{ data = sessionStorage.getItem(STORAGE_KEY); }catch(e){} }
-  if(!data){ try{ data = sessionStorage.getItem('smartech-calls'); }catch(e){} }
+function ctLoadStorage(){
+  var d=null;
+  // Try all known keys — same as existing call-tracker uses
+  try{d=localStorage.getItem('smartech_calls_v2');}catch(e){}
+  if(!d){try{d=localStorage.getItem('smartech-calls');}catch(e){}}
+  if(!d){try{d=sessionStorage.getItem('smartech_calls_v2');}catch(e){}}
+  if(!d){try{d=sessionStorage.getItem('smartech-calls');}catch(e){}}
   // Try cookie
-  if(!data){
+  if(!d){
     try{
-      var match = document.cookie.match(new RegExp('(?:^|; )'+STORAGE_KEY+'=([^;]*)'));
-      if(match) data = decodeURIComponent(match[1]);
+      var m=document.cookie.match(/(?:^|; )smartech_calls_v2=([^;]*)/);
+      if(m)d=decodeURIComponent(m[1]);
     }catch(e){}
   }
-  // Try old cookie key
-  if(!data){
+  if(!d){
     try{
-      var match2 = document.cookie.match(/(?:^|; )smartech-calls=([^;]*)/);
-      if(match2) data = decodeURIComponent(match2[1]);
+      var m2=document.cookie.match(/(?:^|; )smartech-calls=([^;]*)/);
+      if(m2)d=decodeURIComponent(m2[1]);
     }catch(e){}
   }
-  // If data found from old key, migrate it to new key
-  if(data){
-    try{ localStorage.setItem(STORAGE_KEY, data); }catch(e){}
-  }
-  return data;
+  return d;
 }
 
-function loadFilter(){
-  var f = null;
-  try{ f = localStorage.getItem(FILTER_KEY); }catch(e){}
-  if(!f){ try{ f = sessionStorage.getItem(FILTER_KEY); }catch(e){} }
-  return f || 'all';
-}
-
-// Load from storage on start
-window.addEventListener('load', function(){
-  var saved = loadSaved();
-  if(saved){
-    try{
-      var parsed = JSON.parse(saved);
-      if(parsed && parsed.length){
-        customers = parsed;
-        // Restore filter
-        curFilter = loadFilter();
-        // Highlight correct filter button
-        document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});
-        var fmap={'all':0,'pending':1,'success':2,'skipped':3};
-        var btns=document.querySelectorAll('.fbtn');
-        if(btns[fmap[curFilter]])btns[fmap[curFilter]].classList.add('active');
-        showCalls();
-        g('card-setup').style.display='none';
-        dot(2);
-        // Show restore notification
-        var pending = customers.filter(function(c){return c.status==='pending';}).length;
-        if(pending>0){
-          setTimeout(function(){
-            alert2('import-status','warn','Welcome back! You have <strong>'+pending+' pending call(s)</strong> from your last session.');
-            g('card-setup').style.display='none';
-          },300);
-        }
-      }
-    }catch(e){ customers=[]; }
-  }
-});
-
-// Warn on close/refresh only if there are unsaved pending calls
-window.addEventListener('beforeunload', function(e){
-  save(); // Always save before leaving
-  var pending = customers.filter(function(c){return c.status==='pending';}).length;
-  if(pending>0){
-    e.preventDefault();
-    e.returnValue='You have '+pending+' pending calls. Your data is saved automatically.';
-    return e.returnValue;
-  }
-});
-
-function g(id){ return document.getElementById(id); }
-
-function dot(n){
-  ['d1','d2','d3'].forEach(function(id,i){
-    g(id).className='dot'+(i+1<n?' done':i+1===n?' on':'');
-  });
-}
-
-function alert2(tid,type,html){
-  var icons={ok:'✅',err:'❌',warn:'⚠️',info:'ℹ️'};
-  g(tid).innerHTML='<div class="al al-'+type+'">'+icons[type]+'<span>'+html+'</span></div>';
-}
-
-function initials(name){
-  var parts=name.trim().split(' ').filter(Boolean);
-  if(parts.length>=2)return(parts[0][0]+parts[1][0]).toUpperCase();
-  return name.slice(0,2).toUpperCase();
-}
-
-function parseText(txt){
+function parseOrders(txt){
   var phRe=/(?:\+?234|0)[789]\d{9}/g;
   var emRe=/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
   var blocks=[];
-
-  // Split on NEW ORDER
   if(/NEW ORDER/i.test(txt)){
     var parts=txt.split(/(?=\*?(?:NEW ORDER))/i).filter(function(t){return t.trim();});
-    if(parts.length>1){blocks=parts;}
+    if(parts.length>1)blocks=parts;
   }
-  // Split on repeated Name: fields
   if(!blocks.length){
-    var lines=txt.split('\n');
-    var cur=[];
-    var all=[];
+    var lines=txt.split('\n'),cur=[],all=[];
     lines.forEach(function(line){
       var tr=line.trim();
-      if(/^Name[:\s]/i.test(tr)&&cur.length>0&&cur.some(function(l){return /^Name[:\s]/i.test(l.trim());})){
-        all.push(cur.join('\n'));cur=[tr];
-      } else {cur.push(line);}
+      if(/^Name[:\s]/i.test(tr)&&cur.length>0&&cur.some(function(l){return /^Name[:\s]/i.test(l.trim());})){all.push(cur.join('\n'));cur=[tr];}
+      else cur.push(line);
     });
     if(cur.length)all.push(cur.join('\n'));
     blocks=all.filter(function(b){return b.trim();});
   }
   if(!blocks.length)blocks=[txt];
-
   var out=[];
   blocks.forEach(function(block,i){
-    var t=block.trim();
-    if(!t)return;
+    var t=block.trim(); if(!t)return;
     var ph=Array.from(t.matchAll(phRe)).map(function(m){return m[0];});
     var em=Array.from(t.matchAll(emRe)).map(function(m){return m[0];});
     var name='Customer '+(i+1);
@@ -330,320 +492,426 @@ function parseText(txt){
     var prod='Order item';
     var pm=t.match(/NEW ORDER[^\n]*[-—]\s*([^\n]+)/i)||t.match(/Product[:\s]+([^\n]+)/i)||t.match(/(iPhone 17[^\n]*|Samsung[^\n]*S26[^\n]*)/i);
     if(pm)prod=(pm[1]||pm[0]).trim().replace(/[*_]/g,'').trim().slice(0,60);
-    var phone='';
-    var wm=t.match(/(?:WhatsApp|WA|Phone|Tel)[:\s]*\+?(\d{10,13})/i);
-    if(wm){phone=wm[1].replace(/^0/,'234');}
-    else if(ph[0]){phone=ph[0].replace(/\s/g,'').replace(/^\+/,'').replace(/^0/,'234');}
-    if(phone&&!phone.startsWith('234'))phone='234'+phone;
-    var phoneFmt=phone?'+'+phone:'';
-    if(!name&&!phoneFmt)return;
-    // Extract location/state
-    var location='';
-    var lm=t.match(/State[:\s]+([^\n]+)/i)||
-             t.match(/Location[:\s]+([^\n]+)/i)||
-             t.match(/Address[:\s]+([^\n]+)/i)||
-             t.match(/City[:\s]+([^\n]+)/i)||
-             t.match(/Pickup[:\s]+([^\n]+)/i)||
-             t.match(/PICKUP BRANCH[:\s]+([^\n]+)/i)||
-             t.match(/Delivery[:\s]+([^\n]+)/i);
-    if(lm&&lm[1])location=lm[1].trim().replace(/[*_]/g,'').slice(0,80);
-    out.push({id:'c'+Date.now()+i,name:name,product:prod,phone:phoneFmt,email:em[0]||'',location:location,status:'pending',note:'',calledAt:null});
+    var waNum='';
+    var wm=t.match(/(?:WhatsApp|WA|Phone)[:\s]*\+?(\d{10,13})/i);
+    if(wm)waNum=wm[1].replace(/^0/,'234');
+    else if(ph[0])waNum=ph[0].replace(/\s/g,'').replace(/^\+/,'').replace(/^0/,'234');
+    if(waNum&&!waNum.startsWith('234'))waNum='234'+waNum;
+    var phone=waNum?'+'+waNum:'';
+    var loc='';
+    var lm=t.match(/State[:\s]+([^\n]+)/i)||t.match(/Location[:\s]+([^\n]+)/i)||t.match(/PICKUP BRANCH[:\s]+([^\n]+)/i)||t.match(/Address[:\s]+([^\n]+)/i);
+    if(lm&&lm[1])loc=lm[1].trim().replace(/[*_]/g,'').slice(0,80);
+    out.push({id:'c'+Date.now()+i,name:name,product:prod,phone:phone,email:em[0]||'',location:loc,status:'pending',note:'',calledAt:null,dispatched:false});
   });
   return out;
 }
 
-function importCustomers(){
-  var txt=g('paste').value.trim();
-  if(!txt){alert2('import-status','warn','Paste your order messages first.');return;}
-  var parsed=parseText(txt);
-  if(!parsed.length){alert2('import-status','warn','Could not find any customers. Make sure messages have Name: and Phone: fields.');return;}
-  // Merge: add new ones, keep existing
+function ctImport(){
+  var txt=g('ct-paste').value.trim();
+  if(!txt){al('ct-status','warn','Paste order messages first.');return;}
+  var parsed=parseOrders(txt);
+  if(!parsed.length){al('ct-status','warn','Could not parse customers. Make sure messages have Name: and Phone: fields.');return;}
   var existing=customers.map(function(c){return c.phone;});
   var added=0;
-  parsed.forEach(function(p){
-    if(!existing.includes(p.phone)){customers.push(p);added++;}
-  });
-  save();
-  alert2('import-status','ok','Imported <strong>'+added+' new customers</strong> ('+parsed.length+' found, '+(parsed.length-added)+' already in list).');
-  showCalls();dot(2);
+  parsed.forEach(function(p){if(!p.phone||!existing.includes(p.phone)){customers.push(p);added++;}});
+  ctSave();
+  al('ct-status','ok','Added <strong>'+added+' new customers</strong> ('+parsed.length+' found, '+(parsed.length-added)+' already in list).');
+  ctShowList();
 }
 
-function loadDemo(){
+function ctDemo(){
   customers=[
-    {id:'d1',name:'Amaka Eze',product:'iPhone 17 Pro Max',phone:'+2348012345678',email:'amaka@gmail.com',location:'Lagos (Home Delivery)',status:'pending',note:'',calledAt:null},
-    {id:'d2',name:'Chidi Okafor',product:'Samsung S26 Ultra',phone:'+2348098765432',email:'',location:'Abuja (FCT) — Utako 1',status:'pending',note:'',calledAt:null},
-    {id:'d3',name:'Fatima Bello',product:'iPhone 17 Pro Max',phone:'+2348055443322',email:'fatima@yahoo.com',location:'Kano — Bompai Road',status:'success',note:'Confirmed order, will be home by 3pm',calledAt:new Date().toISOString()},
-    {id:'d4',name:'Ngozi Adeyemi',product:'Samsung S26 Ultra',phone:'+2349011223344',email:'',location:'Port Harcourt — Ada George',status:'pending',note:'',calledAt:null},
-    {id:'d5',name:'Emeka Nwosu',product:'iPhone 17 Pro Max',phone:'+2348031122334',email:'emeka@gmail.com',location:'Enugu — Uwani',status:'skipped',note:'Number not reachable',calledAt:null},
+    {id:'d1',name:'Amaka Eze',product:'iPhone 17 Pro Max',phone:'+2348012345678',email:'amaka@gmail.com',location:'Abuja (FCT)',status:'pending',note:'',calledAt:null,dispatched:false},
+    {id:'d2',name:'Chidi Okafor',product:'Samsung S26 Ultra',phone:'+2348098765432',email:'',location:'Kano',status:'success',note:'Ready to pick up',calledAt:new Date().toISOString(),dispatched:false},
+    {id:'d3',name:'Fatima Bello',product:'iPhone 17 Pro Max',phone:'+2348055443322',email:'fatima@yahoo.com',location:'Port Harcourt',status:'success',note:'Available all day',calledAt:new Date().toISOString(),dispatched:true},
+    {id:'d4',name:'Ngozi Adeyemi',product:'Samsung S26 Ultra',phone:'+2349011223344',email:'',location:'Enugu',status:'pending',note:'',calledAt:null,dispatched:false},
+    {id:'d5',name:'Emeka Nwosu',product:'iPhone 17 Pro Max',phone:'+2348031122334',email:'emeka@gmail.com',location:'Ibadan',status:'skipped',note:'No answer',calledAt:null,dispatched:false},
   ];
-  save();
-  alert2('import-status','ok','Demo loaded — 5 sample customers.');
-  showCalls();dot(2);
+  ctSave();
+  al('ct-status','ok','Demo loaded — 5 sample customers.');
+  ctShowList();
 }
 
-function addOne(){
+function ctShowList(){
+  ctRender();
+  g('ct-list-card').style.display='block';
+  g('ct-import').style.display='none';
+}
+
+function ctShowImport(){
+  g('ct-import').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function ctAddOne(){
   var name=prompt('Customer name:','');if(!name)return;
-  var phone=prompt('Phone number (e.g. 08012345678):','');if(!phone)return;
-  var prod=prompt('Product ordered:','iPhone 17 Pro Max')||'Order item';
-  var loc=prompt('Location/State (optional):','')||'';
+  var phone=prompt('Phone (e.g. 08012345678):','');if(!phone)return;
+  var prod=prompt('Product:','iPhone 17 Pro Max')||'Order item';
+  var loc=prompt('Location/State:','')||'';
   var p=phone.trim().replace(/\s/g,'').replace(/^\+/,'').replace(/^0/,'234');
   if(!p.startsWith('234'))p='234'+p;
-  customers.push({id:'m'+Date.now(),name:name.trim(),product:prod.trim(),phone:'+'+p,email:'',location:loc.trim(),status:'pending',note:'',calledAt:null});
-  save();showCalls();
+  customers.push({id:'m'+Date.now(),name:name.trim(),product:prod.trim(),phone:'+'+p,email:'',location:loc.trim(),status:'pending',note:'',calledAt:null,dispatched:false});
+  ctSave();ctRender();
 }
 
-function setFilter(f,el){
-  curFilter=f;
-  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('active');});
+function ctSetFilter(f,el){
+  ctFilter=f;
+  document.querySelectorAll('#panel-call .fbtn').forEach(function(b){b.classList.remove('active');});
   el.classList.add('active');
-  saveFilter(f);
-  renderList();
+  ctRender();
 }
 
-function showCalls(){
-  g('card-calls').style.display='block';
-  g('card-log').style.display='block';
-  renderList();
-  window.scrollTo({top:g('card-calls').offsetTop-20,behavior:'smooth'});
-}
+function ctClearSearch(){g('ct-search').value='';g('ct-search-clear').style.display='none';ctRender();}
 
-function updateStats(){
-  var total=customers.length;
+function ctUpdateStats(){
+  var tot=customers.length;
   var pend=customers.filter(function(c){return c.status==='pending';}).length;
   var succ=customers.filter(function(c){return c.status==='success';}).length;
+  var disp=customers.filter(function(c){return c.dispatched;}).length;
   var skip=customers.filter(function(c){return c.status==='skipped';}).length;
-  g('st-t').textContent=total;
-  g('st-p').textContent=pend;
-  g('st-s').textContent=succ;
-  g('st-k').textContent=skip;
-  g('ccount').textContent='('+total+')';
-  var pct=total>0?Math.round((succ/total)*100):0;
-  g('prog-bar').style.width=pct+'%';
-  g('prog-label').textContent=succ+' of '+total+' calls successful ('+pct+'%)';
+  g('ct-st-t').textContent=tot;
+  g('ct-st-p').textContent=pend;
+  g('ct-st-s').textContent=succ;
+  g('ct-st-d').textContent=disp;
+  g('ct-count').textContent='('+tot+')';
+  var pct=tot>0?Math.round((succ/tot)*100):0;
+  g('ct-prog-bar').style.width=pct+'%';
+  g('ct-prog-label').textContent=succ+' of '+tot+' calls successful ('+pct+'%)';
+  // Update tab badge
+  g('badge-pending').textContent=pend;
+  // Dispatch prompt
+  var readyForDispatch=customers.filter(function(c){return c.status==='success'&&!c.dispatched;}).length;
+  g('dp-ready-count').textContent=readyForDispatch;
+  g('ct-dispatch-prompt').style.display=readyForDispatch>0?'block':'none';
+  g('badge-ready').textContent=readyForDispatch;
 }
 
-function clearSearch(){
-  g('search-input').value='';
-  g('search-clear').style.display='none';
-  renderList();
-}
-
-function renderList(){
-  updateStats();
-  var q=(g('search-input')?g('search-input').value.trim().toLowerCase():'');
-  // Show/hide clear button
-  var clr=g('search-clear');
-  if(clr)clr.style.display=q?'block':'none';
+function ctRender(){
+  ctUpdateStats();
+  var q=(g('ct-search')?g('ct-search').value.trim().toLowerCase():'');
+  var clr=g('ct-search-clear');if(clr)clr.style.display=q?'block':'none';
   var filtered=customers.filter(function(c){
-    var matchStatus=curFilter==='all'||c.status===curFilter;
-    var matchSearch=!q||
-      c.name.toLowerCase().includes(q)||
-      c.product.toLowerCase().includes(q)||
-      (c.phone&&c.phone.includes(q))||
-      (c.location&&c.location.toLowerCase().includes(q));
-    return matchStatus&&matchSearch;
+    var ms=ctFilter==='all'||c.status===ctFilter||(ctFilter==='dispatched'&&c.dispatched);
+    var mq=!q||c.name.toLowerCase().includes(q)||c.product.toLowerCase().includes(q)||(c.location&&c.location.toLowerCase().includes(q));
+    return ms&&mq;
   });
-  var list=g('call-list');
-  if(!filtered.length){
-    var msg=q?'No customers found for "<strong>'+q+'</strong>"':'No customers in this category';
-    list.innerHTML='<div style="text-align:center;padding:24px;color:#999">'+msg+'</div>';
-    return;
-  }
-  // Sort: pending first, then success, then skipped
-  filtered.sort(function(a,b){
-    var ord={pending:0,skipped:1,success:2};
-    return ord[a.status]-ord[b.status];
-  });
+  filtered.sort(function(a,b){var o={pending:0,skipped:1,success:2};return (o[a.status]||0)-(o[b.status]||0);});
+  var list=g('ct-list');
+  if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:20px;color:#999">No customers in this category</div>';return;}
   list.innerHTML=filtered.map(function(c){
-    var ini=initials(c.name);
-    var statLabel=c.status==='pending'?'🔴 Not Called':c.status==='success'?'✅ Called':'⏭ Skipped';
-    var timeStr=c.calledAt?'<div class="call-time">Called at: '+new Date(c.calledAt).toLocaleString()+'</div>':'';
-    return '<div class="call-card '+c.status+'" id="card-'+c.id+'">' +
-      '<span class="call-status-badge">'+statLabel+'</span>' +
-      '<div class="call-top">' +
-        '<div class="call-avatar">'+ini+'</div>' +
-        '<div><div class="call-name">'+c.name+'</div><div class="call-product">'+c.product+'</div>'+(c.location?'<div style="font-size:11px;color:#888;margin-top:2px">📍 '+c.location+'</div>':'')+'</div>' +
-      '</div>' +
-      '<div class="call-phone">📞 <a href="tel:'+c.phone+'" style="color:inherit;text-decoration:none" onclick="startCall(\''+c.id+'\')">' + c.phone+'</a></div>' +
-      '<div class="call-actions">' +
-        '<a href="tel:'+c.phone+'" onclick="startCall(\''+c.id+'\')" class="btn bgr bsm" style="text-decoration:none">📞 Call now</a>' +
-        (c.status!=='success'?'<button class="btn bgr bsm" onclick="markSuccess(\''+c.id+'\')">✅ Call Successful</button>':'') +
-        (c.status!=='skipped'?'<button class="btn bgh bsm" onclick="markSkipped(\''+c.id+'\')">⏭ Skip</button>':'') +
-        (c.status!=='pending'?'<button class="btn bgh bsm" onclick="markPending(\''+c.id+'\')">🔄 Reset</button>':'') +
-        '<button class="btn bgh bsm" onclick="removeCustomer(\''+c.id+'\')">🗑</button>' +
-      '</div>' +
-      '<input class="call-notes" placeholder="Add notes about this call..." value="'+escHtml(c.note)+'" onchange="saveNote(\''+c.id+'\',this.value)" onblur="saveNote(\''+c.id+'\',this.value)">' +
-      timeStr +
+    var av=ini(c.name);
+    var cls='cc '+(c.dispatched?'dispatched':c.status);
+    var badge=c.dispatched?'📦 Dispatched':c.status==='pending'?'🔴 Not Called':c.status==='success'?'✅ Called':'⏭ Skipped';
+    var time=c.calledAt?'<div class="cc-time">Called: '+new Date(c.calledAt).toLocaleString()+'</div>':'';
+    return '<div class="'+cls+'" id="cc-'+c.id+'">'+
+      '<span class="cc-badge">'+badge+'</span>'+
+      '<div class="cc-top"><div class="cc-avatar">'+av+'</div>'+
+      '<div><div class="cc-name">'+c.name+'</div><div class="cc-product">'+c.product+'</div>'+(c.location?'<div class="cc-loc">📍 '+c.location+'</div>':'')+'</div></div>'+
+      '<div class="cc-phone">📞 <a href="tel:'+c.phone+'" style="color:inherit;text-decoration:none">'+c.phone+'</a></div>'+
+      '<div class="bbar">'+
+        '<a href="tel:'+c.phone+'" class="btn bgr bsm" style="text-decoration:none" onclick="ctLogCall(\''+c.id+'\')">📞 Call</a>'+
+        (c.status!=='success'?'<button class="btn bgr bsm" onclick="ctMarkSuccess(\''+c.id+'\')">✅ Call Successful</button>':'')+''+
+        (c.status!=='skipped'?'<button class="btn bgh bsm" onclick="ctMarkSkipped(\''+c.id+'\')">⏭ Skip</button>':'')+''+
+        (c.status!=='pending'?'<button class="btn bgh bsm" onclick="ctReset(\''+c.id+'\')">🔄 Reset</button>':'')+''+
+        '<button class="btn bgh bsm" onclick="ctRemove(\''+c.id+'\')">🗑</button>'+
+      '</div>'+
+      '<input class="cc-notes" placeholder="Add notes..." value="'+escH(c.note)+'" onchange="ctSaveNote(\''+c.id+'\',this.value)">'+
+      time+
     '</div>';
   }).join('');
 }
 
-function escHtml(s){ return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escH(s){return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-function startCall(id){
-  // Just log the call attempt — user will mark success/fail manually
-  addLog(id,'attempted');
-}
-
-function markSuccess(id){
-  var c=customers.find(function(c){return c.id===id;});
+function ctMarkSuccess(id){
+  var c=customers.find(function(c){return c.id==id;});
   if(!c)return;
-  c.status='success';
-  c.calledAt=new Date().toISOString();
-  save();renderList();
-  addLog(id,'success');
-  dot(3);
+  c.status='success';c.calledAt=new Date().toISOString();
+  ctSave();ctRender();
+  // Auto sync dispatch
+  dpSync();
+  al('dp-status','pu','<strong>'+c.name+'</strong> is now ready for dispatch! Go to 📦 Dispatch tab.');
 }
 
-function markSkipped(id){
-  var c=customers.find(function(c){return c.id===id;});
-  if(!c)return;
-  c.status='skipped';
-  save();renderList();
-  addLog(id,'skipped');
+function ctMarkSkipped(id){var c=customers.find(function(c){return c.id==id;});if(!c)return;c.status='skipped';ctSave();ctRender();}
+function ctReset(id){var c=customers.find(function(c){return c.id==id;});if(!c)return;c.status='pending';c.calledAt=null;ctSave();ctRender();}
+function ctRemove(id){if(!confirm('Remove this customer?'))return;customers=customers.filter(function(c){return c.id!=id;});ctSave();ctRender();}
+function ctSaveNote(id,val){var c=customers.find(function(c){return c.id==id;});if(c){c.note=val;ctSave();}}
+function ctLogCall(id){} // placeholder
+
+function ctSaveFile(){
+  var blob=new Blob([JSON.stringify({customers:customers,savedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='smartech-calls-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 
-function markPending(id){
-  var c=customers.find(function(c){return c.id===id;});
-  if(!c)return;
-  c.status='pending';
-  c.calledAt=null;
-  save();renderList();
+function ctLoadFile(){
+  var inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=function(e){
+    var file=e.target.files[0];if(!file)return;
+    var r=new FileReader();
+    r.onload=function(ev){
+      try{
+        var d=JSON.parse(ev.target.result);
+        var loaded=Array.isArray(d)?d:(d.customers||[]);
+        if(!loaded.length){alert('No customers found.');return;}
+        var ex=customers.map(function(c){return c.phone;});
+        var added=0;
+        loaded.forEach(function(c){
+          if(!ex.includes(c.phone)){customers.push(c);added++;}
+          else{var i=customers.findIndex(function(x){return x.phone===c.phone;});if(i>-1)customers[i]=c;}
+        });
+        ctSave();ctShowList();
+        al('ct-status','ok','Loaded <strong>'+loaded.length+' customers</strong> ('+added+' new).');
+      }catch(ex){alert('Could not read file: '+ex.message);}
+    };
+    r.readAsText(file);
+  };
+  inp.click();
 }
 
-function removeCustomer(id){
-  if(!confirm('Remove this customer?'))return;
-  customers=customers.filter(function(c){return c.id!==id;});
-  save();renderList();
+function ctClearAll(){
+  if(!confirm('Clear ALL customers? This cannot be undone.'))return;
+  customers=[];ctSave();
+  g('ct-list-card').style.display='none';
+  g('ct-import').style.display='block';
+  g('ct-dispatch-prompt').style.display='none';
+  al('ct-status','ok','All cleared.');dpSync();
 }
 
-function saveNote(id,val){
-  var c=customers.find(function(c){return c.id===id;});
-  if(c){c.note=val;save();}
+// ══════════ DISPATCH ══════════
+var dispatchList=[];
+var dpQ=[];
+var dpIdx=0;
+
+function dpBuildMsg(name,prod,addr,tracking){
+  var tpl=g('dp-tpl').value;
+  var biz=g('dp-biz').value||'Smartech';
+  return tpl.replace(/{name}/g,name).replace(/{product}/g,prod).replace(/{biz}/g,biz).replace(/{address}/g,addr).replace(/{tracking}/g,tracking);
 }
 
-function addLog(id,type){
-  var c=customers.find(function(c){return c.id===id;});
-  if(!c)return;
-  var w=g('log-body');
-  var icon=type==='success'?'✅':type==='skipped'?'⏭':'📞';
-  var label=type==='success'?'Call successful':type==='skipped'?'Skipped':'Call attempted';
-  var color=type==='success'?'#16a34a':type==='skipped'?'#6b7280':'#2563eb';
-  var r=document.createElement('div');
-  r.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0ee;font-size:13px;gap:8px;';
-  r.innerHTML='<span>'+icon+' <strong>'+c.name+'</strong> — '+label+'</span>'+
-    '<span style="font-size:11px;font-weight:600;color:'+color+'">'+label+'</span>'+
-    '<span style="color:#999;font-size:11px;white-space:nowrap">'+new Date().toLocaleTimeString()+'</span>';
-  if(w.innerHTML.includes('No calls logged'))w.innerHTML='';
-  w.prepend(r);
+// AUTO SYNC — pulls successful unDispatched customers into dispatch list
+function dpSync(){
+  var ready=customers.filter(function(c){return c.status==='success';});
+  if(!ready.length){dpRender();return;}
+  ready.forEach(function(c){
+    var exists=dispatchList.find(function(d){return d.id===c.id;});
+    if(!exists){
+      var pickup=matchAddress(c.location);
+      var addr=pickup?pickup.address:'Contact us for your nearest pickup location.';
+      var addrLabel=pickup?pickup.label:(c.location||'Unknown');
+      dispatchList.push({
+        id:c.id,name:c.name,phone:c.phone,product:c.product,
+        location:c.location,addrLabel:addrLabel,address:addr,
+        tracking:'',message:'',sent:false
+      });
+    }
+  });
+  dpRender();
+  dpSave();
 }
 
-function showImport(){
-  g('card-setup').style.display='block';
+function dpSave(){
+  try{localStorage.setItem(DP_KEY,JSON.stringify(dispatchList));}catch(e){}
+}
+
+function dpUpdateStats(){
+  var sent=dispatchList.filter(function(d){return d.sent;}).length;
+  g('dp-st-t').textContent=dispatchList.length;
+  g('dp-st-p').textContent=dispatchList.length-sent;
+  g('dp-st-s').textContent=sent;
+  g('dp-count').textContent='('+dispatchList.length+')';
+  g('badge-ready').textContent=dispatchList.length-sent;
+}
+
+function dpRender(){
+  dpUpdateStats();
+  var q=g('dp-search')?g('dp-search').value.trim().toLowerCase():'';
+  var filtered=dispatchList.filter(function(d){
+    return !q||d.name.toLowerCase().includes(q)||d.product.toLowerCase().includes(q)||(d.addrLabel&&d.addrLabel.toLowerCase().includes(q));
+  });
+  var list=g('dp-list');
+  if(!filtered.length){
+    list.innerHTML='<div style="text-align:center;padding:24px;color:#999">No customers ready for dispatch yet.<br>Go to <strong>📞 Call Tracker</strong> tab and mark customers as ✅ Called Successful.</div>';
+    return;
+  }
+  list.innerHTML=filtered.map(function(d){
+    var av=ini(d.name);
+    var cls='dc'+(d.sent?' sent':'');
+    var badge=d.sent?'✅ Sent':'📦 Ready';
+    return '<div class="'+cls+'" id="dc-'+d.id+'">'+
+      '<span class="dc-badge">'+badge+'</span>'+
+      '<div class="dc-top"><div class="dc-avatar">'+av+'</div>'+
+      '<div><div class="dc-name">'+d.name+'</div><div class="dc-product">'+d.product+'</div><div class="dc-loc">📍 '+d.addrLabel+'</div></div></div>'+
+      '<div style="font-size:11px;font-family:monospace;color:#555;margin-bottom:8px">📞 '+d.phone+'</div>'+
+      '<div style="margin-bottom:8px">'+
+        '<label style="font-size:11px;font-weight:600;color:#7c3aed;display:block;margin-bottom:3px">📦 TRACKING NUMBER</label>'+
+        '<input id="track-'+d.id+'" type="text" value="'+escH(d.tracking)+'" placeholder="Type tracking number here..." '+
+          'onchange="dpUpdateTracking(\''+d.id+'\',this.value)" class="track-input">'+
+      '</div>'+
+      '<div class="dc-addr">'+d.address.replace(/\n/g,'<br>')+'</div>'+
+      (!d.sent?
+        '<div class="bbar">'+
+          '<button class="btn bwa bsm" onclick="dpSendWa(\''+d.id+'\')">📱 Send WhatsApp</button>'+
+          '<button class="btn bpu bsm" onclick="dpMarkSent(\''+d.id+'\')">✅ Mark sent</button>'+
+        '</div>':
+        '<div style="font-size:12px;color:#15803d;font-weight:600">✅ Dispatch sent</div>'
+      )+
+    '</div>';
+  }).join('');
+}
+
+function dpUpdateTracking(id,val){
+  var d=dispatchList.find(function(d){return d.id==id;});
+  if(!d)return;
+  d.tracking=val.trim();
+  d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking);
+  dpSave();
+}
+
+function dpSendWa(id){
+  var d=dispatchList.find(function(d){return d.id==id;});if(!d)return;
+  var inp=g('track-'+id);
+  if(inp&&inp.value.trim()){d.tracking=inp.value.trim();d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking);}
+  if(!d.tracking){alert('Please enter a tracking number for '+d.name+' first!');if(inp)inp.focus();return;}
+  location.href='https://wa.me/'+d.phone.replace(/\D/g,'')+`?text=`+encodeURIComponent(d.message);
+  d.sent=true;
+  // Mark as dispatched in call tracker
+  var c=customers.find(function(c){return c.id==d.id;});
+  if(c){c.dispatched=true;ctSave();}
+  dpSave();setTimeout(function(){dpRender();ctRender();},500);
+}
+
+function dpMarkSent(id){
+  var d=dispatchList.find(function(d){return d.id==id;});if(!d)return;
+  d.sent=true;
+  var c=customers.find(function(c){return c.id==d.id;});
+  if(c){c.dispatched=true;ctSave();}
+  dpSave();dpRender();ctRender();
+}
+
+function dpSaveFile(){
+  var blob=new Blob([JSON.stringify({dispatchList:dispatchList,savedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='smartech-dispatch-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+
+// DISPATCH QUEUE
+function dpStartQueue(){
+  dpQ=dispatchList.filter(function(d){return !d.sent;});
+  if(!dpQ.length){alert('All customers already notified!');return;}
+  dpIdx=0;
+  g('dp-queue-card').style.display='block';
+  g('dp-list-card').style.display='none';
+  dpUpdateQ();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function saveToFile(){
-  var data={
-    customers:customers,
-    savedAt:new Date().toISOString(),
-    version:'1.0'
-  };
-  var json=JSON.stringify(data,null,2);
-  var blob=new Blob([json],{type:'application/json'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='smartech-calls-'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  // Show save confirmation
-  var btn=event.target;
-  var orig=btn.textContent;
-  btn.textContent='✅ Saved!';
-  btn.style.background='#15803d';
-  setTimeout(function(){btn.textContent=orig;btn.style.background='';},2000);
+function dpUpdateQ(){
+  if(dpIdx>=dpQ.length){dpEndQueue();return;}
+  var d=dpQ[dpIdx];
+  g('dp-qprog').textContent='Customer '+(dpIdx+1)+' of '+dpQ.length;
+  g('dp-qname').textContent=d.name;
+  g('dp-qprod').textContent=d.product;
+  g('dp-qloc').textContent='📍 '+d.addrLabel;
+  g('dp-qtrack').value=d.tracking||'';
+  g('dp-qaddr').textContent=d.address;
+  g('dp-qmsg').textContent=d.message||'(Enter tracking number above to preview message)';
 }
 
-function loadFromFile(){
-  var input=document.createElement('input');
-  input.type='file';
-  input.accept='.json';
-  input.onchange=function(e){
-    var file=e.target.files[0];
-    if(!file)return;
-    var reader=new FileReader();
-    reader.onload=function(ev){
-      try{
-        var data=JSON.parse(ev.target.result);
-        var loaded=[];
-        if(Array.isArray(data)){
-          loaded=data;
-        } else if(data.customers&&Array.isArray(data.customers)){
-          loaded=data.customers;
-        } else {
-          alert('Invalid file format. Please load a Smartech call tracker save file.');
-          return;
-        }
-        if(!loaded.length){alert('No customers found in this file.');return;}
-        // Merge with existing — avoid duplicates by phone
-        var existing=customers.map(function(c){return c.phone;});
-        var added=0;
-        loaded.forEach(function(c){
-          if(!existing.includes(c.phone)){customers.push(c);added++;}
-          else {
-            // Update existing customer data
-            var idx=customers.findIndex(function(ex){return ex.phone===c.phone;});
-            if(idx>-1){customers[idx]=c;}
-          }
+function dpUpdateQueueTracking(val){
+  if(dpIdx>=dpQ.length)return;
+  var d=dpQ[dpIdx];
+  d.tracking=val.trim();
+  d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking);
+  g('dp-qmsg').textContent=d.message;
+  dpSave();
+}
+
+function dpOpenWa(){
+  var d=dpQ[dpIdx];
+  var tv=g('dp-qtrack').value.trim();
+  if(tv){d.tracking=tv;d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking);}
+  if(!d.tracking){alert('Please enter a tracking number first!');g('dp-qtrack').focus();return;}
+  location.href='https://wa.me/'+d.phone.replace(/\D/g,'')+`?text=`+encodeURIComponent(d.message);
+}
+
+function dpNextQ(){
+  var d=dpQ[dpIdx];
+  d.sent=true;
+  var c=customers.find(function(c){return c.id==d.id;});
+  if(c){c.dispatched=true;ctSave();}
+  dpSave();dpIdx++;
+  dpIdx>=dpQ.length?dpEndQueue():dpUpdateQ();
+}
+
+function dpSkipQ(){dpIdx++;dpIdx>=dpQ.length?dpEndQueue():dpUpdateQ();}
+
+function dpEndQueue(){
+  g('dp-queue-card').style.display='none';
+  g('dp-list-card').style.display='block';
+  dpRender();ctRender();
+  window.scrollTo({top:g('dp-list-card').offsetTop-20,behavior:'smooth'});
+}
+
+// ══════════ TABS ══════════
+function switchTab(tab){
+  ['call','dispatch'].forEach(function(t){
+    g('panel-'+t).classList.remove('active');
+    g('tab-'+t).classList.remove('active');
+  });
+  g('panel-'+tab).classList.add('active');
+  g('tab-'+tab).classList.add('active');
+  if(tab==='dispatch')dpSync();
+}
+
+// ══════════ INIT ══════════
+window.addEventListener('load',function(){
+  // Load call tracker data
+  var ctData=ctLoadStorage();
+  if(ctData){
+    try{
+      var p=JSON.parse(ctData);
+      if(p&&p.length){
+        // Preserve all existing data — add any missing fields without losing anything
+        customers=p.map(function(c){
+          return {
+            id:c.id||('c'+Date.now()+Math.random()),
+            name:c.name||'Unknown',
+            product:c.product||'Order item',
+            phone:c.phone||'',
+            email:c.email||'',
+            location:c.location||'',
+            status:c.status||'pending',
+            note:c.note||'',
+            calledAt:c.calledAt||null,
+            dispatched:c.dispatched||false
+          };
         });
-        save();showCalls();
-        alert2('import-status','ok','Loaded <strong>'+loaded.length+' customers</strong> from file ('+added+' new, '+(loaded.length-added)+' updated). Saved at: '+(data.savedAt?new Date(data.savedAt).toLocaleString():'unknown'));
-        g('card-setup').style.display='none';
-        dot(2);
-      }catch(ex){
-        alert('Could not read file: '+ex.message);
+        ctShowList();
+        g('ct-import').style.display='none';
+        var pend=customers.filter(function(c){return c.status==='pending';}).length;
+        var succ=customers.filter(function(c){return c.status==='success';}).length;
+        var skip=customers.filter(function(c){return c.status==='skipped';}).length;
+        al('ct-status','info','Welcome back! Loaded <strong>'+customers.length+' customers</strong> — '+pend+' pending, '+succ+' called, '+skip+' skipped.');
       }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-}
+    }catch(e){customers=[];}
+  }
+  // Load dispatch data
+  var dpData=null;
+  try{dpData=localStorage.getItem(DP_KEY);}catch(e){}
+  if(dpData){
+    try{
+      var pd=JSON.parse(dpData);
+      if(pd&&pd.length)dispatchList=pd;
+    }catch(e){}
+  }
+  dpSync();
+  ctRender();
+  dpRender();
+});
 
-function clearAll(){
-  if(!confirm('Clear ALL customer data? This cannot be undone.'))return;
-  customers=[];
-  try{localStorage.removeItem('smartech-calls');localStorage.removeItem('smartech-filter');}catch(e){}
-  g('card-calls').style.display='none';
-  g('card-log').style.display='none';
-  g('card-setup').style.display='block';
-  g('import-status').innerHTML='';
-  g('log-body').innerHTML='<div style="text-align:center;padding:20px;color:#999">No calls logged yet</div>';
-  dot(1);
-  alert2('import-status','ok','All data cleared.');
-}
-
-function exportSummary(){
-  var lines=['Smartech Call Tracker Summary','Generated: '+new Date().toLocaleString(),'',''];
-  var pend=customers.filter(function(c){return c.status==='pending';});
-  var succ=customers.filter(function(c){return c.status==='success';});
-  var skip=customers.filter(function(c){return c.status==='skipped';});
-  lines.push('TOTAL: '+customers.length+' | CALLED: '+succ.length+' | PENDING: '+pend.length+' | SKIPPED: '+skip.length);
-  lines.push('');
-  lines.push('=== PENDING (Not Called Yet) ===');
-  pend.forEach(function(c){lines.push('- '+c.name+' | '+c.phone+' | '+c.product+(c.location?' | '+c.location:'')+(c.note?' | Note: '+c.note:''));});
-  lines.push('');
-  lines.push('=== SUCCESSFULLY CALLED ===');
-  succ.forEach(function(c){lines.push('- '+c.name+' | '+c.phone+' | '+c.product+(c.location?' | '+c.location:'')+(c.note?' | Note: '+c.note:'')+(c.calledAt?' | '+new Date(c.calledAt).toLocaleString():''));});
-  lines.push('');
-  lines.push('=== SKIPPED ===');
-  skip.forEach(function(c){lines.push('- '+c.name+' | '+c.phone+(c.location?' | '+c.location:'')+(c.note?' | '+c.note:''));});
-  var blob=new Blob([lines.join('\n')],{type:'text/plain'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='smartech-calls-'+new Date().toISOString().slice(0,10)+'.txt';
-  a.click();
-}
+window.addEventListener('beforeunload',function(){ctSave();dpSave();});
 </script>
 </body>
 </html>
-
