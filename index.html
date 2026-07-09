@@ -258,6 +258,8 @@ textarea{resize:vertical}
 
 Your {product} order from {biz} is ready for pickup!
 
+📅 SHIPMENT DATE: {shipdate}
+
 📍 PICKUP ADDRESS:
 {address}
 
@@ -301,9 +303,13 @@ Thank you for choosing {biz}! 🙏</textarea>
       <div class="qname" id="dp-qname">Loading...</div>
       <div class="qprod" id="dp-qprod"></div>
       <div class="qloc" id="dp-qloc">📍</div>
-      <div class="field" style="margin-bottom:10px;text-align:left">
+      <div class="field" style="margin-bottom:8px;text-align:left">
         <label style="font-size:11px;font-weight:600;color:#7c3aed">📦 TRACKING NUMBER</label>
         <input id="dp-qtrack" type="text" placeholder="Type tracking number here..." onchange="dpUpdateQueueTracking(this.value)" class="track-input" style="margin-top:4px">
+      </div>
+      <div class="field" style="margin-bottom:10px;text-align:left">
+        <label style="font-size:11px;font-weight:600;color:#d97706">📅 SHIPMENT DATE</label>
+        <input id="dp-qshipdate" type="date" onchange="dpUpdateQueueShipDate(this.value)" style="margin-top:4px;border:2px solid #fde68a;background:#fffbeb;border-radius:6px;padding:7px 10px;font-size:13px;color:#92400e;width:100%">
       </div>
       <div class="dispatch-addr-box" id="dp-qaddr"></div>
       <div class="dispatch-msg-box" id="dp-qmsg"></div>
@@ -501,7 +507,47 @@ function parseOrders(txt){
     var loc='';
     var lm=t.match(/State[:\s]+([^\n]+)/i)||t.match(/Location[:\s]+([^\n]+)/i)||t.match(/PICKUP BRANCH[:\s]+([^\n]+)/i)||t.match(/Address[:\s]+([^\n]+)/i);
     if(lm&&lm[1])loc=lm[1].trim().replace(/[*_]/g,'').slice(0,80);
-    out.push({id:'c'+Date.now()+i,name:name,product:prod,phone:phone,email:em[0]||'',location:loc,status:'pending',note:'',calledAt:null,dispatched:false});
+
+    // Extract shipment date from order message
+    var shipmentDate='';
+    // Try explicit date fields first
+    var dm=t.match(/(?:Ship(?:ment)?\s*Date|Delivery\s*Date|Dispatch\s*Date|Expected\s*Date|Date)[:\s]+([^\n]+)/i);
+    if(dm&&dm[1]){
+      var rawDate=dm[1].trim();
+      // Try to parse it as a date
+      var parsed=new Date(rawDate);
+      if(!isNaN(parsed.getTime())){
+        shipmentDate=parsed.toISOString().slice(0,10);
+      }
+    }
+    // Try to find date patterns in the text (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD)
+    if(!shipmentDate){
+      var datePatterns=[
+        /(\d{4}-\d{2}-\d{2})/,                    // YYYY-MM-DD
+        /(\d{2}\/\d{2}\/\d{4})/,                  // DD/MM/YYYY or MM/DD/YYYY
+        /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/,   // flexible
+        /(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4})/i, // 9 July 2026
+        /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}/i  // July 9, 2026
+      ];
+      for(var di=0;di<datePatterns.length;di++){
+        var dm2=t.match(datePatterns[di]);
+        if(dm2){
+          var tryDate=new Date(dm2[0]);
+          if(!isNaN(tryDate.getTime())&&tryDate.getFullYear()>2020){
+            shipmentDate=tryDate.toISOString().slice(0,10);
+            break;
+          }
+        }
+      }
+    }
+    // If no date found, default to 3 days from today (standard delivery time)
+    if(!shipmentDate){
+      var defaultDate=new Date();
+      defaultDate.setDate(defaultDate.getDate()+3);
+      shipmentDate=defaultDate.toISOString().slice(0,10);
+    }
+
+    out.push({id:'c'+Date.now()+i,name:name,product:prod,phone:phone,email:em[0]||'',location:loc,status:'pending',note:'',calledAt:null,dispatched:false,shipmentDate:shipmentDate,dispatchedAt:null});
   });
   return out;
 }
@@ -521,11 +567,11 @@ function ctImport(){
 
 function ctDemo(){
   customers=[
-    {id:'d1',name:'Amaka Eze',product:'iPhone 17 Pro Max',phone:'+2348012345678',email:'amaka@gmail.com',location:'Abuja (FCT)',status:'pending',note:'',calledAt:null,dispatched:false},
-    {id:'d2',name:'Chidi Okafor',product:'Samsung S26 Ultra',phone:'+2348098765432',email:'',location:'Kano',status:'success',note:'Ready to pick up',calledAt:new Date().toISOString(),dispatched:false},
-    {id:'d3',name:'Fatima Bello',product:'iPhone 17 Pro Max',phone:'+2348055443322',email:'fatima@yahoo.com',location:'Port Harcourt',status:'success',note:'Available all day',calledAt:new Date().toISOString(),dispatched:true},
-    {id:'d4',name:'Ngozi Adeyemi',product:'Samsung S26 Ultra',phone:'+2349011223344',email:'',location:'Enugu',status:'pending',note:'',calledAt:null,dispatched:false},
-    {id:'d5',name:'Emeka Nwosu',product:'iPhone 17 Pro Max',phone:'+2348031122334',email:'emeka@gmail.com',location:'Ibadan',status:'skipped',note:'No answer',calledAt:null,dispatched:false},
+    {id:'d1',name:'Amaka Eze',product:'iPhone 17 Pro Max',phone:'+2348012345678',email:'amaka@gmail.com',location:'Abuja (FCT)',status:'pending',note:'',calledAt:null,dispatched:false,shipmentDate:'',dispatchedAt:null},
+    {id:'d2',name:'Chidi Okafor',product:'Samsung S26 Ultra',phone:'+2348098765432',email:'',location:'Kano',status:'success',note:'Ready to pick up',calledAt:new Date().toISOString(),dispatched:false,shipmentDate:'',dispatchedAt:null},
+    {id:'d3',name:'Fatima Bello',product:'iPhone 17 Pro Max',phone:'+2348055443322',email:'fatima@yahoo.com',location:'Port Harcourt',status:'success',note:'Available all day',calledAt:new Date().toISOString(),dispatched:true,shipmentDate:new Date().toLocaleDateString(),dispatchedAt:new Date().toISOString()},
+    {id:'d4',name:'Ngozi Adeyemi',product:'Samsung S26 Ultra',phone:'+2349011223344',email:'',location:'Enugu',status:'pending',note:'',calledAt:null,dispatched:false,shipmentDate:'',dispatchedAt:null},
+    {id:'d5',name:'Emeka Nwosu',product:'iPhone 17 Pro Max',phone:'+2348031122334',email:'emeka@gmail.com',location:'Ibadan',status:'skipped',note:'No answer',calledAt:null,dispatched:false,shipmentDate:'',dispatchedAt:null},
   ];
   ctSave();
   al('ct-status','ok','Demo loaded — 5 sample customers.');
@@ -616,7 +662,14 @@ function ctRender(){
         '<button class="btn bgh bsm" onclick="ctRemove(\''+c.id+'\')">🗑</button>'+
       '</div>'+
       '<input class="cc-notes" placeholder="Add notes..." value="'+escH(c.note)+'" onchange="ctSaveNote(\''+c.id+'\',this.value)">'+
+      '<div style="margin-top:6px">'+
+        '<label style="font-size:10px;font-weight:600;color:#d97706;display:block;margin-bottom:3px">📅 SHIPMENT DATE</label>'+
+        '<input type="date" value="'+escH(c.shipmentDate||'')+'" id="ctship-'+c.id+'" '+
+          'onchange="ctSaveShipDate(\''+c.id+'\',this.value)" '+
+          'style="width:100%;border:1.5px solid #fde68a;background:#fffbeb;border-radius:6px;padding:6px 10px;font-size:12px;color:#92400e;outline:none">'+
+      '</div>'+
       time+
+      (c.dispatched&&c.dispatchedAt?'<div class="cc-time" style="color:#7c3aed">📦 Dispatched: '+new Date(c.dispatchedAt).toLocaleString()+(c.shipmentDate?' | 📅 '+new Date(c.shipmentDate).toLocaleDateString('en-NG',{weekday:"short",month:"short",day:"numeric",year:"numeric"}):'')+'</div>':'')+
     '</div>';
   }).join('');
 }
@@ -637,6 +690,20 @@ function ctMarkSkipped(id){var c=customers.find(function(c){return c.id==id;});i
 function ctReset(id){var c=customers.find(function(c){return c.id==id;});if(!c)return;c.status='pending';c.calledAt=null;ctSave();ctRender();}
 function ctRemove(id){if(!confirm('Remove this customer?'))return;customers=customers.filter(function(c){return c.id!=id;});ctSave();ctRender();}
 function ctSaveNote(id,val){var c=customers.find(function(c){return c.id==id;});if(c){c.note=val;ctSave();}}
+
+function ctSaveShipDate(id,val){
+  var c=customers.find(function(c){return c.id==id;});
+  if(!c)return;
+  c.shipmentDate=val;
+  ctSave();
+  // Also update dispatch list if exists
+  var d=dispatchList.find(function(d){return d.id==id;});
+  if(d){
+    d.shipmentDate=val;
+    d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking,val);
+    dpSave();
+  }
+}
 function ctLogCall(id){} // placeholder
 
 function ctSaveFile(){
@@ -684,10 +751,11 @@ var dispatchList=[];
 var dpQ=[];
 var dpIdx=0;
 
-function dpBuildMsg(name,prod,addr,tracking){
+function dpBuildMsg(name,prod,addr,tracking,shipDate){
   var tpl=g('dp-tpl').value;
   var biz=g('dp-biz').value||'Smartech';
-  return tpl.replace(/{name}/g,name).replace(/{product}/g,prod).replace(/{biz}/g,biz).replace(/{address}/g,addr).replace(/{tracking}/g,tracking);
+  var dateStr=shipDate?new Date(shipDate).toLocaleDateString('en-NG',{weekday:'long',year:'numeric',month:'long',day:'numeric'}):'Not set';
+  return tpl.replace(/{name}/g,name).replace(/{product}/g,prod).replace(/{biz}/g,biz).replace(/{address}/g,addr).replace(/{tracking}/g,tracking).replace(/{shipdate}/g,dateStr);
 }
 
 // AUTO SYNC — pulls successful unDispatched customers into dispatch list
@@ -703,7 +771,7 @@ function dpSync(){
       dispatchList.push({
         id:c.id,name:c.name,phone:c.phone,product:c.product,
         location:c.location,addrLabel:addrLabel,address:addr,
-        tracking:'',message:'',sent:false
+        tracking:'',shipmentDate:c.shipmentDate||'',message:'',sent:false,dispatchedAt:null
       });
     }
   });
@@ -749,6 +817,13 @@ function dpRender(){
         '<input id="track-'+d.id+'" type="text" value="'+escH(d.tracking)+'" placeholder="Type tracking number here..." '+
           'onchange="dpUpdateTracking(\''+d.id+'\',this.value)" class="track-input">'+
       '</div>'+
+      '<div style="margin-bottom:8px">'+
+        '<label style="font-size:11px;font-weight:600;color:#d97706;display:block;margin-bottom:3px">📅 SHIPMENT DATE</label>'+
+        '<input id="ship-'+d.id+'" type="date" value="'+escH(d.shipmentDate||'')+'" '+
+          'onchange="dpUpdateShipDate(\''+d.id+'\',this.value)" '+
+          'style="border:2px solid #fde68a;background:#fffbeb;border-radius:6px;padding:7px 10px;font-size:13px;color:#92400e;width:100%">'+
+      '</div>'+
+      (d.dispatchedAt?'<div style="font-size:11px;color:#7c3aed;margin-bottom:6px">📦 Dispatched: '+new Date(d.dispatchedAt).toLocaleString()+'</div>':'')+
       '<div class="dc-addr">'+d.address.replace(/\n/g,'<br>')+'</div>'+
       (!d.sent?
         '<div class="bbar">'+
@@ -765,28 +840,53 @@ function dpUpdateTracking(id,val){
   var d=dispatchList.find(function(d){return d.id==id;});
   if(!d)return;
   d.tracking=val.trim();
-  d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking);
+  d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking,d.shipmentDate||'');
+  dpSave();
+}
+
+function dpUpdateShipDate(id,val){
+  var d=dispatchList.find(function(d){return d.id==id;});
+  if(!d)return;
+  d.shipmentDate=val;
+  d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking,val);
+  // Also update in call tracker
+  var c=customers.find(function(c){return c.id==id;});
+  if(c){c.shipmentDate=val;ctSave();}
+  dpSave();
+}
+
+function dpUpdateQueueShipDate(val){
+  if(dpIdx>=dpQ.length)return;
+  var d=dpQ[dpIdx];
+  d.shipmentDate=val;
+  d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking,val);
+  g('dp-qmsg').textContent=d.message;
   dpSave();
 }
 
 function dpSendWa(id){
   var d=dispatchList.find(function(d){return d.id==id;});if(!d)return;
   var inp=g('track-'+id);
-  if(inp&&inp.value.trim()){d.tracking=inp.value.trim();d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking);}
+  var ship=g('ship-'+id);
+  if(inp&&inp.value.trim()){d.tracking=inp.value.trim();}
+  if(ship&&ship.value){d.shipmentDate=ship.value;}
+  d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking,d.shipmentDate||'');
   if(!d.tracking){alert('Please enter a tracking number for '+d.name+' first!');if(inp)inp.focus();return;}
   location.href='https://wa.me/'+d.phone.replace(/\D/g,'')+`?text=`+encodeURIComponent(d.message);
   d.sent=true;
+  d.dispatchedAt=new Date().toISOString();
   // Mark as dispatched in call tracker
   var c=customers.find(function(c){return c.id==d.id;});
-  if(c){c.dispatched=true;ctSave();}
+  if(c){c.dispatched=true;c.dispatchedAt=d.dispatchedAt;c.shipmentDate=d.shipmentDate||'';ctSave();}
   dpSave();setTimeout(function(){dpRender();ctRender();},500);
 }
 
 function dpMarkSent(id){
   var d=dispatchList.find(function(d){return d.id==id;});if(!d)return;
   d.sent=true;
+  d.dispatchedAt=new Date().toISOString();
   var c=customers.find(function(c){return c.id==d.id;});
-  if(c){c.dispatched=true;ctSave();}
+  if(c){c.dispatched=true;c.dispatchedAt=d.dispatchedAt;c.shipmentDate=d.shipmentDate||'';ctSave();}
   dpSave();dpRender();ctRender();
 }
 
@@ -815,15 +915,16 @@ function dpUpdateQ(){
   g('dp-qprod').textContent=d.product;
   g('dp-qloc').textContent='📍 '+d.addrLabel;
   g('dp-qtrack').value=d.tracking||'';
+  g('dp-qshipdate').value=d.shipmentDate||'';
   g('dp-qaddr').textContent=d.address;
-  g('dp-qmsg').textContent=d.message||'(Enter tracking number above to preview message)';
+  g('dp-qmsg').textContent=d.message||'(Enter tracking number and shipment date above to preview message)';
 }
 
 function dpUpdateQueueTracking(val){
   if(dpIdx>=dpQ.length)return;
   var d=dpQ[dpIdx];
   d.tracking=val.trim();
-  d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking);
+  d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking,d.shipmentDate||g('dp-qshipdate').value||'');
   g('dp-qmsg').textContent=d.message;
   dpSave();
 }
@@ -831,7 +932,10 @@ function dpUpdateQueueTracking(val){
 function dpOpenWa(){
   var d=dpQ[dpIdx];
   var tv=g('dp-qtrack').value.trim();
-  if(tv){d.tracking=tv;d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking);}
+  var sv=g('dp-qshipdate').value;
+  if(tv)d.tracking=tv;
+  if(sv)d.shipmentDate=sv;
+  d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking,d.shipmentDate||'');
   if(!d.tracking){alert('Please enter a tracking number first!');g('dp-qtrack').focus();return;}
   location.href='https://wa.me/'+d.phone.replace(/\D/g,'')+`?text=`+encodeURIComponent(d.message);
 }
@@ -839,8 +943,13 @@ function dpOpenWa(){
 function dpNextQ(){
   var d=dpQ[dpIdx];
   d.sent=true;
+  d.dispatchedAt=new Date().toISOString();
+  var tv=g('dp-qtrack').value.trim();
+  var sv=g('dp-qshipdate').value;
+  if(tv)d.tracking=tv;
+  if(sv)d.shipmentDate=sv;
   var c=customers.find(function(c){return c.id==d.id;});
-  if(c){c.dispatched=true;ctSave();}
+  if(c){c.dispatched=true;c.dispatchedAt=d.dispatchedAt;c.shipmentDate=d.shipmentDate||'';ctSave();}
   dpSave();dpIdx++;
   dpIdx>=dpQ.length?dpEndQueue():dpUpdateQ();
 }
@@ -885,7 +994,9 @@ window.addEventListener('load',function(){
             status:c.status||'pending',
             note:c.note||'',
             calledAt:c.calledAt||null,
-            dispatched:c.dispatched||false
+            dispatched:c.dispatched||false,
+            shipmentDate:c.shipmentDate||'',
+            dispatchedAt:c.dispatchedAt||null
           };
         });
         ctShowList();
