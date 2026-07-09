@@ -313,6 +313,10 @@ Thank you for choosing {biz}! 🙏</textarea>
       </div>
       <div class="dispatch-addr-box" id="dp-qaddr"></div>
       <div class="dispatch-msg-box" id="dp-qmsg"></div>
+      <div class="field" style="margin-bottom:12px;text-align:left">
+        <label style="font-size:11px;font-weight:600;color:#555">📝 DISPATCH NOTES</label>
+        <input type="text" id="dp-qnote" placeholder="e.g. customer confirmed 2pm pickup..." onchange="dpUpdateQueueNote(this.value)" style="margin-top:4px;font-size:13px;border-radius:6px;padding:8px 12px;border:1px solid #ddd;width:100%">
+      </div>
       <button class="btn bwa blg" onclick="dpOpenWa()" style="width:100%;justify-content:center;margin-bottom:12px">📱 Open WhatsApp for this customer</button>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
         <button class="btn bgh" onclick="dpSkipQ()">⏭ Skip</button>
@@ -771,7 +775,7 @@ function dpSync(){
       dispatchList.push({
         id:c.id,name:c.name,phone:c.phone,product:c.product,
         location:c.location,addrLabel:addrLabel,address:addr,
-        tracking:'',shipmentDate:c.shipmentDate||'',message:'',sent:false,dispatchedAt:null
+        tracking:'',shipmentDate:c.shipmentDate||'',message:'',sent:false,dispatchedAt:null,note:c.dispatchNote||''
       });
     }
   });
@@ -825,12 +829,13 @@ function dpRender(){
       '</div>'+
       (d.dispatchedAt?'<div style="font-size:11px;color:#7c3aed;margin-bottom:6px">📦 Dispatched: '+new Date(d.dispatchedAt).toLocaleString()+'</div>':'')+
       '<div class="dc-addr">'+d.address.replace(/\n/g,'<br>')+'</div>'+
+      '<input class="cc-notes" placeholder="Add dispatch notes... e.g. customer confirmed pickup time" value="'+escH(d.note||'')+'" onchange="dpSaveNote(\''+d.id+'\',this.value)" style="margin-bottom:8px">'+
       (!d.sent?
         '<div class="bbar">'+
           '<button class="btn bwa bsm" onclick="dpSendWa(\''+d.id+'\')">📱 Send WhatsApp</button>'+
           '<button class="btn bpu bsm" onclick="dpMarkSent(\''+d.id+'\')">✅ Mark sent</button>'+
         '</div>':
-        '<div style="font-size:12px;color:#15803d;font-weight:600">✅ Dispatch sent</div>'
+        '<div style="font-size:12px;color:#15803d;font-weight:600">✅ Dispatch sent'+(d.note?' — '+d.note:'')+'</div>'
       )+
     '</div>';
   }).join('');
@@ -855,12 +860,29 @@ function dpUpdateShipDate(id,val){
   dpSave();
 }
 
+function dpSaveNote(id,val){
+  var d=dispatchList.find(function(d){return d.id==id;});
+  if(!d)return;
+  d.note=val;
+  // Sync note back to call tracker too
+  var c=customers.find(function(c){return c.id==id;});
+  if(c){c.dispatchNote=val;ctSave();}
+  dpSave();
+}
+
 function dpUpdateQueueShipDate(val){
   if(dpIdx>=dpQ.length)return;
   var d=dpQ[dpIdx];
   d.shipmentDate=val;
   d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking,val);
   g('dp-qmsg').textContent=d.message;
+  dpSave();
+}
+
+function dpUpdateQueueNote(val){
+  if(dpIdx>=dpQ.length)return;
+  var d=dpQ[dpIdx];
+  d.note=val;
   dpSave();
 }
 
@@ -916,6 +938,7 @@ function dpUpdateQ(){
   g('dp-qloc').textContent='📍 '+d.addrLabel;
   g('dp-qtrack').value=d.tracking||'';
   g('dp-qshipdate').value=d.shipmentDate||'';
+  g('dp-qnote').value=d.note||'';
   g('dp-qaddr').textContent=d.address;
   g('dp-qmsg').textContent=d.message||'(Enter tracking number and shipment date above to preview message)';
 }
@@ -946,10 +969,12 @@ function dpNextQ(){
   d.dispatchedAt=new Date().toISOString();
   var tv=g('dp-qtrack').value.trim();
   var sv=g('dp-qshipdate').value;
+  var nv=g('dp-qnote').value.trim();
   if(tv)d.tracking=tv;
   if(sv)d.shipmentDate=sv;
+  if(nv)d.note=nv;
   var c=customers.find(function(c){return c.id==d.id;});
-  if(c){c.dispatched=true;c.dispatchedAt=d.dispatchedAt;c.shipmentDate=d.shipmentDate||'';ctSave();}
+  if(c){c.dispatched=true;c.dispatchedAt=d.dispatchedAt;c.shipmentDate=d.shipmentDate||'';c.dispatchNote=d.note||'';ctSave();}
   dpSave();dpIdx++;
   dpIdx>=dpQ.length?dpEndQueue():dpUpdateQ();
 }
@@ -1026,3 +1051,4 @@ window.addEventListener('beforeunload',function(){ctSave();dpSave();});
 </script>
 </body>
 </html>
+
