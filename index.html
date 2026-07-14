@@ -544,10 +544,11 @@ function parseOrders(txt){
         }
       }
     }
-    // If no date found, default to 3 days from today (standard delivery time)
+    // If no date found, default based on location
     if(!shipmentDate){
       var defaultDate=new Date();
-      defaultDate.setDate(defaultDate.getDate()+3);
+      var isLagos=loc.toLowerCase().includes('lagos');
+      if(!isLagos) defaultDate.setDate(defaultDate.getDate()+3);
       shipmentDate=defaultDate.toISOString().slice(0,10);
     }
 
@@ -653,10 +654,21 @@ function ctRender(){
     var cls='cc '+(c.dispatched?'dispatched':c.status);
     var badge=c.dispatched?'📦 Dispatched':c.status==='pending'?'🔴 Not Called':c.status==='success'?'✅ Called':'⏭ Skipped';
     var time=c.calledAt?'<div class="cc-time">Called: '+new Date(c.calledAt).toLocaleString()+'</div>':'';
+    var loc=(c.location||'').toLowerCase();
+    var isLagos=loc.includes('lagos');
+    var pickup=matchAddress(c.location);
+    var deliveryInfo=isLagos?
+      '<div style="display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#15803d;margin-bottom:6px">🚀 Lagos — Delivery within 6 hours</div>':
+      '<div style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#1d4ed8;margin-bottom:6px">📦 '+(pickup?pickup.label:'Other State')+' — Delivery within 3 days</div>';
+    var addrBox=pickup?
+      '<div style="background:'+(isLagos?'#f0fdf4':'#f5f3ff')+';border:1px solid '+(isLagos?'#bbf7d0':'#ddd6fe')+';border-left:3px solid '+(isLagos?'#16a34a':'#7c3aed')+';border-radius:6px;padding:8px 12px;font-size:11px;color:'+(isLagos?'#14532d':'#4c1d95')+';line-height:1.6;margin-bottom:8px"><strong>'+(isLagos?'🏠 DELIVERY ADDRESS':'📍 PICKUP ADDRESS')+'</strong><br>'+pickup.address.replace(/\n/g,'<br>')+'</div>':
+      (c.location?'<div style="background:#fffbeb;border:1px solid #fde68a;border-left:3px solid #d97706;border-radius:6px;padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:8px">📍 Location: '+escH(c.location)+' — Contact us for exact pickup address</div>':'');
     return '<div class="'+cls+'" id="cc-'+c.id+'">'+
       '<span class="cc-badge">'+badge+'</span>'+
       '<div class="cc-top"><div class="cc-avatar">'+av+'</div>'+
       '<div><div class="cc-name">'+c.name+'</div><div class="cc-product">'+c.product+'</div>'+(c.location?'<div class="cc-loc">📍 '+c.location+'</div>':'')+'</div></div>'+
+      deliveryInfo+
+      addrBox+
       '<div class="cc-phone">📞 <a href="tel:'+c.phone+'" style="color:inherit;text-decoration:none">'+c.phone+'</a></div>'+
       '<div class="bbar">'+
         '<a href="tel:'+c.phone+'" class="btn bgr bsm" style="text-decoration:none" onclick="ctLogCall(\''+c.id+'\')">📞 Call</a>'+
@@ -1051,4 +1063,3 @@ window.addEventListener('beforeunload',function(){ctSave();dpSave();});
 </script>
 </body>
 </html>
-
