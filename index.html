@@ -513,9 +513,53 @@ function parseOrders(txt){
     else if(ph[0])waNum=ph[0].replace(/\s/g,'').replace(/^\+/,'').replace(/^0/,'234');
     if(waNum&&!waNum.startsWith('234'))waNum='234'+waNum;
     var phone=waNum?'+'+waNum:'';
+
+    // Extract state for location matching
     var loc='';
-    var lm=t.match(/State[:\s]+([^\n]+)/i)||t.match(/Location[:\s]+([^\n]+)/i)||t.match(/PICKUP BRANCH[:\s]+([^\n]+)/i)||t.match(/Address[:\s]+([^\n]+)/i);
-    if(lm&&lm[1])loc=lm[1].trim().replace(/[*_]/g,'').slice(0,80);
+    var stateLm=t.match(/State[:\s]+([^\n]+)/i);
+    if(stateLm&&stateLm[1])loc=stateLm[1].trim().replace(/[*_]/g,'').slice(0,80);
+
+    // Extract exact pickup branch and address from Telegram order
+    var exactAddress='';
+
+    // Match PICKUP BRANCH: which may contain full address inline e.g.
+    // "PICKUP BRANCH: Lugbe — Shepherd-King Plaza, Beside Remaco Filling Station, Lugbe"
+    var pbLm=t.match(/PICKUP\s*BRANCH\s*[:\-]+\s*([^\n]+)/i)||
+             t.match(/PICKUP\s*[:\-]+\s*([^\n]+)/i)||
+             t.match(/Pickup\s*[:\-]+\s*([^\n]+)/i);
+
+    if(pbLm&&pbLm[1]){
+      var pbVal=pbLm[1].trim().replace(/[*_]/g,'');
+      // If it contains — or - with address detail, keep the whole thing
+      var emDash=pbVal.indexOf(' \u2014 ');
+      var dash=pbVal.indexOf(' - ');
+      if(emDash>-1){
+        var bName=pbVal.slice(0,emDash).trim();
+        var bAddr=pbVal.slice(emDash+3).trim();
+        exactAddress='Smartech Pickup \u2014 '+bName+'\n'+bAddr;
+      } else if(dash>-1){
+        var bName2=pbVal.slice(0,dash).trim();
+        var bAddr2=pbVal.slice(dash+3).trim();
+        exactAddress='Smartech Pickup \u2014 '+bName2+'\n'+bAddr2;
+      } else {
+        exactAddress=pbVal;
+      }
+    }
+
+    // Also check for standalone ADDRESS: field
+    var addrLm=t.match(/ADDRESS\s*[:\-]+\s*([^\n]+)/i);
+    var hoursLm=t.match(/HOURS\s*[:\-]+\s*([^\n]+)/i);
+    if(addrLm&&addrLm[1]&&!exactAddress){
+      exactAddress=addrLm[1].trim().replace(/[*_]/g,'');
+    }
+    if(hoursLm&&hoursLm[1]&&exactAddress){
+      exactAddress+='\n'+hoursLm[1].trim();
+    }
+    // Fallback: use location field if no exact address
+    if(!loc){
+      var locFallback=t.match(/Location[:\s]+([^\n]+)/i);
+      if(locFallback&&locFallback[1])loc=locFallback[1].trim().replace(/[*_]/g,'').slice(0,80);
+    }
 
     // Extract shipment date from order message
     var shipmentDate='';
@@ -557,7 +601,7 @@ function parseOrders(txt){
       shipmentDate=defaultDate.toISOString().slice(0,10);
     }
 
-    out.push({id:'c'+Date.now()+i,name:name,product:prod,phone:phone,email:em[0]||'',location:loc,status:'pending',note:'',calledAt:null,dispatched:false,shipmentDate:shipmentDate,dispatchedAt:null});
+    out.push({id:'c'+Date.now()+i,name:name,product:prod,phone:phone,email:em[0]||'',location:loc,exactAddress:exactAddress,status:'pending',note:'',calledAt:null,dispatched:false,shipmentDate:shipmentDate,dispatchedAt:null,dispatchNote:''});
   });
   return out;
 }
@@ -567,11 +611,23 @@ function ctImport(){
   if(!txt){al('ct-status','warn','Paste order messages first.');return;}
   var parsed=parseOrders(txt);
   if(!parsed.length){al('ct-status','warn','Could not parse customers. Make sure messages have Name: and Phone: fields.');return;}
-  var existing=customers.map(function(c){return c.phone;});
-  var added=0;
-  parsed.forEach(function(p){if(!p.phone||!existing.includes(p.phone)){customers.push(p);added++;}});
+  var added=0, updated=0;
+  parsed.forEach(function(p){
+    var idx=customers.findIndex(function(c){return c.phone&&p.phone&&c.phone===p.phone;});
+    if(idx===-1){
+      customers.push(p);added++;
+    } else {
+      // Update existing — refresh name, product, exactAddress but keep call status
+      customers[idx].name=p.name||customers[idx].name;
+      customers[idx].product=p.product||customers[idx].product;
+      customers[idx].location=p.location||customers[idx].location;
+      if(p.exactAddress)customers[idx].exactAddress=p.exactAddress;
+      if(p.shipmentDate&&!customers[idx].shipmentDate)customers[idx].shipmentDate=p.shipmentDate;
+      updated++;
+    }
+  });
   ctSave();
-  al('ct-status','ok','Added <strong>'+added+' new customers</strong> ('+parsed.length+' found, '+(parsed.length-added)+' already in list).');
+  al('ct-status','ok','Added <strong>'+added+' new customers</strong>, updated <strong>'+updated+'</strong> existing.');
   ctShowList();
 }
 
@@ -663,12 +719,16 @@ function ctRender(){
     var loc=(c.location||'').toLowerCase();
     var isLagos=loc.includes('lagos');
     var pickup=matchAddress(c.location);
+    // Priority: 1) exactAddress from Telegram order, 2) pickup database
+    var hasExact=c.exactAddress&&c.exactAddress.trim().length>5;
+    var displayAddr=hasExact?c.exactAddress:(pickup?pickup.address:null);
+    var addrLabel=hasExact?'📍 PICKUP ADDRESS (from your order)':'📍 PICKUP ADDRESS';
     var deliveryInfo=isLagos?
       '<div style="display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#15803d;margin-bottom:6px">🚀 Lagos — Delivery within 6 hours</div>':
-      '<div style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#1d4ed8;margin-bottom:6px">📦 '+(pickup?pickup.label:'Other State')+' — Delivery within 3 days</div>';
-    var addrBox=pickup?
-      '<div style="background:'+(isLagos?'#f0fdf4':'#f5f3ff')+';border:1px solid '+(isLagos?'#bbf7d0':'#ddd6fe')+';border-left:3px solid '+(isLagos?'#16a34a':'#7c3aed')+';border-radius:6px;padding:8px 12px;font-size:11px;color:'+(isLagos?'#14532d':'#4c1d95')+';line-height:1.6;margin-bottom:8px"><strong>'+(isLagos?'🏠 DELIVERY ADDRESS':'📍 PICKUP ADDRESS')+'</strong><br>'+pickup.address.replace(/\n/g,'<br>')+'</div>':
-      (c.location?'<div style="background:#fffbeb;border:1px solid #fde68a;border-left:3px solid #d97706;border-radius:6px;padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:8px">📍 Location: '+escH(c.location)+' — Contact us for exact pickup address</div>':'');
+      '<div style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;color:#1d4ed8;margin-bottom:6px">📦 '+(pickup?pickup.label:(c.location||'Other State'))+' — Delivery within 3 days</div>';
+    var addrBox=displayAddr?
+      '<div style="background:'+(isLagos?'#f0fdf4':'#f5f3ff')+';border:1px solid '+(isLagos?'#bbf7d0':'#ddd6fe')+';border-left:3px solid '+(isLagos?'#16a34a':'#7c3aed')+';border-radius:6px;padding:8px 12px;font-size:11px;color:'+(isLagos?'#14532d':'#4c1d95')+';line-height:1.6;margin-bottom:8px"><strong>'+(isLagos?'🏠 DELIVERY ADDRESS':addrLabel)+'</strong><br>'+displayAddr.replace(/\n/g,'<br>')+'</div>':
+      (c.location?'<div style="background:#fffbeb;border:1px solid #fde68a;border-left:3px solid #d97706;border-radius:6px;padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:8px">📍 '+escH(c.location)+' — Contact us for exact pickup address</div>':'');
     return '<div class="'+cls+'" id="cc-'+c.id+'">'+
       '<span class="cc-badge">'+badge+'</span>'+
       '<div class="cc-top"><div class="cc-avatar">'+av+'</div>'+
@@ -790,8 +850,9 @@ function dpSync(){
     var exists=dispatchList.find(function(d){return d.id===c.id;});
     if(!exists){
       var pickup=matchAddress(c.location);
-      var addr=pickup?pickup.address:'Contact us for your nearest pickup location.';
-      var addrLabel=pickup?pickup.label:(c.location||'Unknown');
+      var addr=(c.exactAddress&&c.exactPickup)?(c.exactPickup+'\n'+c.exactAddress+(c.exactHours?'\n'+c.exactHours:'')):
+               pickup?pickup.address:'Contact us for your nearest pickup location.';
+      var addrLabel=(c.exactPickup&&c.exactAddress)?c.exactPickup:pickup?pickup.label:(c.location||'Unknown');
       dispatchList.push({
         id:c.id,name:c.name,phone:c.phone,product:c.product,
         location:c.location,addrLabel:addrLabel,address:addr,
@@ -1043,7 +1104,8 @@ window.addEventListener('load',function(){
             dispatched:c.dispatched||false,
             shipmentDate:c.shipmentDate||'',
             dispatchedAt:c.dispatchedAt||null,
-            dispatchNote:c.dispatchNote||''
+            dispatchNote:c.dispatchNote||'',
+            exactAddress:c.exactAddress||''
           };
         });
         ctShowList();
