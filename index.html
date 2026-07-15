@@ -95,6 +95,8 @@ textarea{resize:vertical}
 .cc.success{border-color:#86efac;background:#f0fdf4}
 .cc.dispatched{border-color:#ddd6fe;background:#faf5ff}
 .cc.skipped{border-color:#e4e4e0;background:#f9f9f7;opacity:.7}
+.cc.callback{border-color:#fed7aa;background:#fff7ed;animation:pulse-orange 2s ease-in-out infinite}
+@keyframes pulse-orange{0%,100%{box-shadow:0 0 0 0 rgba(234,88,12,.1);}50%{box-shadow:0 0 0 6px rgba(234,88,12,.04);}}
 @keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.1);}50%{box-shadow:0 0 0 6px rgba(220,38,38,.04);}}
 .cc-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .cc-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
@@ -102,6 +104,7 @@ textarea{resize:vertical}
 .success .cc-avatar{background:#bbf7d0;color:#15803d}
 .dispatched .cc-avatar{background:#ddd6fe;color:#6d28d9}
 .skipped .cc-avatar{background:#e5e7eb;color:#6b7280}
+.callback .cc-avatar{background:#fed7aa;color:#c2410c}
 .cc-name{font-weight:600;font-size:14px}
 .cc-product{font-size:11px;color:#666}
 .cc-loc{font-size:11px;color:#888;margin-top:1px}
@@ -111,6 +114,7 @@ textarea{resize:vertical}
 .success .cc-badge{background:#bbf7d0;color:#15803d}
 .dispatched .cc-badge{background:#ddd6fe;color:#6d28d9}
 .skipped .cc-badge{background:#e5e7eb;color:#6b7280}
+.callback .cc-badge{background:#fed7aa;color:#c2410c}
 .cc-notes{width:100%;margin-top:6px;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid #ddd;background:#fff}
 .cc-time{font-size:10px;color:#999;margin-top:4px}
 
@@ -209,7 +213,7 @@ textarea{resize:vertical}
       <div class="stat"><div class="snum" id="ct-st-t">0</div><div class="slbl">Total</div></div>
       <div class="stat"><div class="snum red" id="ct-st-p">0</div><div class="slbl">Pending 🔴</div></div>
       <div class="stat"><div class="snum green" id="ct-st-s">0</div><div class="slbl">Called ✅</div></div>
-      <div class="stat"><div class="snum purple" id="ct-st-d">0</div><div class="slbl">Dispatched 📦</div></div>
+      <div class="stat"><div class="snum" id="ct-st-d" style="color:#ea580c">0</div><div class="slbl">Call Back 🔁</div></div>
     </div>
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
@@ -222,6 +226,7 @@ textarea{resize:vertical}
       <button class="fbtn fgreen" onclick="ctSetFilter('success',this)">✅ Called</button>
       <button class="fbtn fpurple" onclick="ctSetFilter('dispatched',this)">📦 Dispatched</button>
       <button class="fbtn" onclick="ctSetFilter('skipped',this)">⏭ Skipped</button>
+      <button class="fbtn" onclick="ctSetFilter('callback',this)">🔁 Call Back</button>
     </div>
     <div class="call-list" id="ct-list"></div>
   </div>
@@ -620,10 +625,11 @@ function ctUpdateStats(){
   var succ=customers.filter(function(c){return c.status==='success';}).length;
   var disp=customers.filter(function(c){return c.dispatched;}).length;
   var skip=customers.filter(function(c){return c.status==='skipped';}).length;
+  var callb=customers.filter(function(c){return c.status==='callback';}).length;
   g('ct-st-t').textContent=tot;
   g('ct-st-p').textContent=pend;
   g('ct-st-s').textContent=succ;
-  g('ct-st-d').textContent=disp;
+  g('ct-st-d').textContent=callb;
   g('ct-count').textContent='('+tot+')';
   var pct=tot>0?Math.round((succ/tot)*100):0;
   g('ct-prog-bar').style.width=pct+'%';
@@ -642,7 +648,7 @@ function ctRender(){
   var q=(g('ct-search')?g('ct-search').value.trim().toLowerCase():'');
   var clr=g('ct-search-clear');if(clr)clr.style.display=q?'block':'none';
   var filtered=customers.filter(function(c){
-    var ms=ctFilter==='all'||c.status===ctFilter||(ctFilter==='dispatched'&&c.dispatched);
+    var ms=ctFilter==='all'||c.status===ctFilter||(ctFilter==='dispatched'&&c.dispatched)||(ctFilter==='callback'&&c.status==='callback');
     var mq=!q||c.name.toLowerCase().includes(q)||c.product.toLowerCase().includes(q)||(c.location&&c.location.toLowerCase().includes(q));
     return ms&&mq;
   });
@@ -651,8 +657,8 @@ function ctRender(){
   if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:20px;color:#999">No customers in this category</div>';return;}
   list.innerHTML=filtered.map(function(c){
     var av=ini(c.name);
-    var cls='cc '+(c.dispatched?'dispatched':c.status);
-    var badge=c.dispatched?'📦 Dispatched':c.status==='pending'?'🔴 Not Called':c.status==='success'?'✅ Called':'⏭ Skipped';
+    var cls='cc '+(c.dispatched?'dispatched':c.status==='callback'?'callback':c.status);
+    var badge=c.dispatched?'📦 Dispatched':c.status==='pending'?'🔴 Not Called':c.status==='success'?'✅ Called':c.status==='callback'?'🔁 Call Back':'⏭ Skipped';
     var time=c.calledAt?'<div class="cc-time">Called: '+new Date(c.calledAt).toLocaleString()+'</div>':'';
     var loc=(c.location||'').toLowerCase();
     var isLagos=loc.includes('lagos');
@@ -673,6 +679,7 @@ function ctRender(){
       '<div class="bbar">'+
         '<a href="tel:'+c.phone+'" class="btn bgr bsm" style="text-decoration:none" onclick="ctLogCall(\''+c.id+'\')">📞 Call</a>'+
         (c.status!=='success'?'<button class="btn bgr bsm" onclick="ctMarkSuccess(\''+c.id+'\')">✅ Call Successful</button>':'')+''+
+        (c.status!=='callback'?'<button class="btn bsm" style="background:#ea580c;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit" onclick="ctMarkCallback(\''+c.id+'\')">🔁 Call Back</button>':'')+''+
         (c.status!=='skipped'?'<button class="btn bgh bsm" onclick="ctMarkSkipped(\''+c.id+'\')">⏭ Skip</button>':'')+''+
         (c.status!=='pending'?'<button class="btn bgh bsm" onclick="ctReset(\''+c.id+'\')">🔄 Reset</button>':'')+''+
         '<button class="btn bgh bsm" onclick="ctRemove(\''+c.id+'\')">🗑</button>'+
@@ -703,6 +710,7 @@ function ctMarkSuccess(id){
 }
 
 function ctMarkSkipped(id){var c=customers.find(function(c){return c.id==id;});if(!c)return;c.status='skipped';ctSave();ctRender();}
+function ctMarkCallback(id){var c=customers.find(function(c){return c.id==id;});if(!c)return;c.status='callback';ctSave();ctRender();}
 function ctReset(id){var c=customers.find(function(c){return c.id==id;});if(!c)return;c.status='pending';c.calledAt=null;ctSave();ctRender();}
 function ctRemove(id){if(!confirm('Remove this customer?'))return;customers=customers.filter(function(c){return c.id!=id;});ctSave();ctRender();}
 function ctSaveNote(id,val){var c=customers.find(function(c){return c.id==id;});if(c){c.note=val;ctSave();}}
@@ -1008,6 +1016,7 @@ function switchTab(tab){
   });
   g('panel-'+tab).classList.add('active');
   g('tab-'+tab).classList.add('active');
+  try{localStorage.setItem('smartech_hub_tab',tab);}catch(e){}
   if(tab==='dispatch')dpSync();
 }
 
@@ -1033,7 +1042,8 @@ window.addEventListener('load',function(){
             calledAt:c.calledAt||null,
             dispatched:c.dispatched||false,
             shipmentDate:c.shipmentDate||'',
-            dispatchedAt:c.dispatchedAt||null
+            dispatchedAt:c.dispatchedAt||null,
+            dispatchNote:c.dispatchNote||''
           };
         });
         ctShowList();
@@ -1054,12 +1064,47 @@ window.addEventListener('load',function(){
       if(pd&&pd.length)dispatchList=pd;
     }catch(e){}
   }
+
+  // Restore last active tab
+  var lastTab=null;
+  try{lastTab=localStorage.getItem('smartech_hub_tab');}catch(e){}
+  if(lastTab==='dispatch'){
+    switchTab('dispatch');
+  }
+
   dpSync();
   ctRender();
   dpRender();
 });
 
-window.addEventListener('beforeunload',function(){ctSave();dpSave();});
+// Save everything before refresh/close — makes refresh harmless
+window.addEventListener('beforeunload',function(){
+  ctSave();
+  dpSave();
+  // Save current tab
+  try{
+    var activeTab=document.querySelector('.tab.active');
+    if(activeTab&&activeTab.id){
+      localStorage.setItem('smartech_hub_tab', activeTab.id.replace('tab-',''));
+    }
+  }catch(e){}
+});
+
+// Intercept keyboard refresh (F5, Ctrl+R) and browser pull-to-refresh
+document.addEventListener('keydown',function(e){
+  if(e.key==='F5'||(e.ctrlKey&&e.key==='r')||(e.metaKey&&e.key==='r')){
+    if(customers.length>0){
+      e.preventDefault();
+      ctSave();dpSave();
+      // Just re-render without full page reload
+      ctRender();dpRender();
+      al('ct-status','info','✅ Data saved — '+customers.length+' customers safe.');
+    }
+  }
+});
+</script>
+</body>
+</html>
 </script>
 </body>
 </html>
