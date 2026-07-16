@@ -285,6 +285,7 @@ Thank you for choosing {biz}! 🙏</textarea>
       <div class="ctitle" style="margin-bottom:0"><b>2</b> Dispatch List <span id="dp-count" style="font-size:11px;font-weight:400;color:#999"></span></div>
       <div class="bbar">
         <button class="btn bpu bsm" onclick="dpStartQueue()">📱 Send all</button>
+        <button class="btn bgh bsm" onclick="dpForceResync()">🔄 Re-sync addresses</button>
         <button class="btn bgr bsm" onclick="dpSaveFile()">💾 Save</button>
       </div>
     </div>
@@ -848,16 +849,20 @@ function dpSync(){
   if(!ready.length){dpRender();return;}
   ready.forEach(function(c){
     var exists=dispatchList.find(function(d){return d.id===c.id;});
+    var hasExact=c.exactAddress&&c.exactAddress.trim().length>5;
+    var pickup=matchAddress(c.location);
+    var addr=hasExact?c.exactAddress:(pickup?pickup.address:'Contact us for your nearest pickup location.');
+    var addrLabel=pickup?pickup.label:(c.location||'Unknown');
     if(!exists){
-      var pickup=matchAddress(c.location);
-      var addr=(c.exactAddress&&c.exactPickup)?(c.exactPickup+'\n'+c.exactAddress+(c.exactHours?'\n'+c.exactHours:'')):
-               pickup?pickup.address:'Contact us for your nearest pickup location.';
-      var addrLabel=(c.exactPickup&&c.exactAddress)?c.exactPickup:pickup?pickup.label:(c.location||'Unknown');
       dispatchList.push({
         id:c.id,name:c.name,phone:c.phone,product:c.product,
         location:c.location,addrLabel:addrLabel,address:addr,
         tracking:'',shipmentDate:c.shipmentDate||'',message:'',sent:false,dispatchedAt:null,note:c.dispatchNote||''
       });
+    } else if(!exists.sent) {
+      // Refresh address for unsent dispatch entries in case exactAddress was added later
+      exists.address=addr;
+      exists.addrLabel=addrLabel;
     }
   });
   dpRender();
@@ -1000,6 +1005,28 @@ function dpSaveFile(){
 }
 
 // DISPATCH QUEUE
+function dpForceResync(){
+  var updated=0;
+  dispatchList.forEach(function(d){
+    if(d.sent)return; // don't touch already sent dispatches
+    var c=customers.find(function(c){return c.id===d.id;});
+    if(!c)return;
+    var hasExact=c.exactAddress&&c.exactAddress.trim().length>5;
+    var pickup=matchAddress(c.location);
+    var newAddr=hasExact?c.exactAddress:(pickup?pickup.address:'Contact us for your nearest pickup location.');
+    var newLabel=pickup?pickup.label:(c.location||'Unknown');
+    if(d.address!==newAddr||d.addrLabel!==newLabel){
+      d.address=newAddr;
+      d.addrLabel=newLabel;
+      if(d.tracking)d.message=dpBuildMsg(d.name,d.product,d.address,d.tracking,d.shipmentDate||'');
+      updated++;
+    }
+  });
+  dpSave();
+  dpRender();
+  al('dp-status','ok','🔄 Re-synced <strong>'+updated+' address(es)</strong> from latest customer data.');
+}
+
 function dpStartQueue(){
   dpQ=dispatchList.filter(function(d){return !d.sent;});
   if(!dpQ.length){alert('All customers already notified!');return;}
